@@ -243,22 +243,22 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         /* to be implemented:  You need to sample the ray and implement the MIP
          * right now it just returns yellow as a color
         */
-         
-        // we got entry and exit. follow this line with samplestep and find the voxel with max intensity
         
-        // vector dir = exit - point
-        // int steps = length(dir) / sampleStep;
-        // normalize(dir)
-        // vector step = sampleStep * dir;
-        
-        //double[] dir = VectorMath
-        
-        
-        
-        int color=0;
-
-        color = (255 << 24) | (255 << 16) | (255 << 8); 
-        
+        double[] dir = VectorMath.subtract(exitPoint, entryPoint);
+        double steps = VectorMath.length(dir) / sampleStep;
+        dir = VectorMath.normalize(dir);
+        double[] step = VectorMath.multiply(dir, sampleStep);
+        double volMax = volume.getMaximum();
+        double max = Double.MIN_VALUE;
+        for (int i = 0; i < steps; i++) {
+            double[] coord = VectorMath.add(VectorMath.multiply(step, i), entryPoint);
+            double val = volume.getVoxelInterpolate(coord);
+            max = Math.max(max, val);
+            if (max == volMax) {
+                break;
+            }
+        }
+        int color = doublesToColor(1, max/volMax, max/volMax, max/volMax);
         return color;
     }
    
@@ -403,7 +403,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                         + volumeCenter[2];
 
                 int val = volume.getVoxelInterpolate(pixelCoord);
-                System.out.println(val);
                 // Map the intensity to a grey value by linear scaling
                 voxelColor.r = val/max;
                 voxelColor.g = voxelColor.r;
@@ -427,6 +426,23 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         }
 
 
+    }
+    
+    /**
+     * Converts a set of doubles between 0 and 1 to an integer colour value in range 0 to 255.
+     * @param a alpha channel
+     * @param r red channel
+     * @param g green channel
+     * @param b blue channel
+     * @return integer values containing the converted rgba colour.
+     */
+    private int doublesToColor(double a, double r, double g, double b) {
+        int c_alpha = a <= 1.0 ? (int) Math.floor(a * 255) : 255;
+        int c_red = r <= 1.0 ? (int) Math.floor(r * 255) : 255;
+        int c_green = g <= 1.0 ? (int) Math.floor(g * 255) : 255;
+        int c_blue = b <= 1.0 ? (int) Math.floor(b * 255) : 255;
+        int pixelColor = (c_alpha << 24) | (c_red << 16) | (c_green << 8) | c_blue;
+        return pixelColor;
     }
 
 
