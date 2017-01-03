@@ -105,34 +105,42 @@ public class Volume {
         VectorMath.setVector( localCoord, roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] ) );
         distances[0] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[0];
+        colorValues[0] = getVoxel( VectorMath.castToInteger( localCoord) );
         
         VectorMath.setVector( localCoord, roundUp( coord[0] ), roundUp( coord[1] ), roundDown( coord[2] ) );
         distances[1] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[1];
+        colorValues[1] = getVoxel( VectorMath.castToInteger( localCoord) );
         
         VectorMath.setVector( localCoord, roundUp( coord[0] ), roundDown( coord[1] ), roundUp( coord[2] ) );
         distances[2] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[2];
+        colorValues[2] = getVoxel( VectorMath.castToInteger( localCoord) );
         
         VectorMath.setVector( localCoord, roundUp( coord[0] ), roundDown( coord[1] ), roundDown( coord[2] ) );
         distances[3] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[3];
+        colorValues[3] = getVoxel( VectorMath.castToInteger( localCoord) );
         
         VectorMath.setVector( localCoord, roundDown( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] ) );
         distances[4] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[4];
+        colorValues[4] = getVoxel( VectorMath.castToInteger( localCoord) );
         
         VectorMath.setVector( localCoord, roundDown( coord[0] ), roundUp( coord[1] ), roundDown( coord[2] ) );
         distances[5] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[6];
+        colorValues[5] = getVoxel( VectorMath.castToInteger( localCoord) );
         
         VectorMath.setVector( localCoord, roundDown( coord[0] ), roundDown( coord[1] ), roundUp( coord[2] ) );
         distances[6] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[6];
+        colorValues[6] = getVoxel( VectorMath.castToInteger( localCoord) );
         
         VectorMath.setVector( localCoord, roundDown( coord[0] ), roundDown( coord[1] ), roundDown( coord[2] ) );
         distances[7] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[7];
+        colorValues[7] = getVoxel( VectorMath.castToInteger( localCoord) );
         
         int result = 0;
         
@@ -140,7 +148,7 @@ public class Volume {
             result += ( distances[i] / totalDistance ) * colorValues[i];
         }
         
-        return 0;
+        return (short) result;
     }
     
     public short getVoxel(int i) {
