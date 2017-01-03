@@ -244,6 +244,17 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
          * right now it just returns yellow as a color
         */
          
+        // we got entry and exit. follow this line with samplestep and find the voxel with max intensity
+        
+        // vector dir = exit - point
+        // int steps = length(dir) / sampleStep;
+        // normalize(dir)
+        // vector step = sampleStep * dir;
+        
+        //double[] dir = VectorMath
+        
+        
+        
         int color=0;
 
         color = (255 << 24) | (255 << 16) | (255 << 8); 
@@ -392,6 +403,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                         + volumeCenter[2];
 
                 int val = volume.getVoxelInterpolate(pixelCoord);
+                System.out.println(val);
                 // Map the intensity to a grey value by linear scaling
                 voxelColor.r = val/max;
                 voxelColor.g = voxelColor.r;
