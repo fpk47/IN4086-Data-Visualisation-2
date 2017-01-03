@@ -6,6 +6,7 @@ package volume;
 
 import java.io.File;
 import java.io.IOException;
+import util.VectorMath;
 
 /**
  *
@@ -37,6 +38,9 @@ public class Volume {
         
     }
     
+    public short getVoxel(int[] coord) {
+        return data[coord[0] + dimX*(coord[1] + dimY * coord[2])];
+    }
     
     public short getVoxel(int x, int y, int z) {
         return data[x + dimX*(y + dimY * z)];
@@ -59,12 +63,84 @@ public class Volume {
             return 0;
         }
         /* notice that in this framework we assume that the distance between neighbouring voxels is 1 in all directions*/
+        
         int x = (int) Math.round(coord[0]); 
         int y = (int) Math.round(coord[1]);
         int z = (int) Math.round(coord[2]);
     
         return getVoxel(x, y, z);
         
+    }
+    
+    /**
+     * Round a double value up ( 7.4 --> 8, 7.7 --> 8)
+     * @param value
+     * @return up-rounded value (int)
+     */
+    private static int roundUp( double value ){
+        return (int) (value + 0.5);
+    } 
+    
+    /**
+     * Round a double value up ( 7.4 --> 7, 7.7 --> 7)
+     * @param value
+     * @return down-rounded value (int)
+     */
+    private static int roundDown( double value ){
+        return (int) value;
+    } 
+    
+    public short getVoxelInterpolateNearestNeightbour(double[] coord) {
+        if (coord[0] < 0 || coord[0] > (dimX-1) || coord[1] < 0 || coord[1] > (dimY-1)
+                || coord[2] < 0 || coord[2] > (dimZ-1)) {
+            return 0;
+        }
+        /* notice that in this framework we assume that the distance between neighbouring voxels is 1 in all directions*/
+        
+        double totalDistance = 0.0;
+        double distances[] = new double[8];
+        double localCoord[] = new double[3];
+        double colorValues[] = new double[8];
+        
+        VectorMath.setVector( localCoord, roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] ) );
+        distances[0] = VectorMath.distance( coord, localCoord );
+        totalDistance += distances[0];
+        
+        VectorMath.setVector( localCoord, roundUp( coord[0] ), roundUp( coord[1] ), roundDown( coord[2] ) );
+        distances[1] = VectorMath.distance( coord, localCoord );
+        totalDistance += distances[1];
+        
+        VectorMath.setVector( localCoord, roundUp( coord[0] ), roundDown( coord[1] ), roundUp( coord[2] ) );
+        distances[2] = VectorMath.distance( coord, localCoord );
+        totalDistance += distances[2];
+        
+        VectorMath.setVector( localCoord, roundUp( coord[0] ), roundDown( coord[1] ), roundDown( coord[2] ) );
+        distances[3] = VectorMath.distance( coord, localCoord );
+        totalDistance += distances[3];
+        
+        VectorMath.setVector( localCoord, roundDown( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] ) );
+        distances[4] = VectorMath.distance( coord, localCoord );
+        totalDistance += distances[4];
+        
+        VectorMath.setVector( localCoord, roundDown( coord[0] ), roundUp( coord[1] ), roundDown( coord[2] ) );
+        distances[5] = VectorMath.distance( coord, localCoord );
+        totalDistance += distances[6];
+        
+        VectorMath.setVector( localCoord, roundDown( coord[0] ), roundDown( coord[1] ), roundUp( coord[2] ) );
+        distances[6] = VectorMath.distance( coord, localCoord );
+        totalDistance += distances[6];
+        
+        VectorMath.setVector( localCoord, roundDown( coord[0] ), roundDown( coord[1] ), roundDown( coord[2] ) );
+        distances[7] = VectorMath.distance( coord, localCoord );
+        totalDistance += distances[7];
+        
+        int result = 0;
+        
+        for ( int i = 0; i < 8; i++ ){
+            result += ( distances[i] / totalDistance ) * colorValues[i];
+        }
+        
+        return 0;
     }
     
     public short getVoxel(int i) {
