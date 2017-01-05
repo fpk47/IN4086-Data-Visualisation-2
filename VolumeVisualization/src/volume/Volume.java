@@ -31,6 +31,8 @@ public class Volume {
             dimY = reader.getYDim();
             dimZ = reader.getZDim();
             data = reader.getData().clone();
+            this.minimum = computeMinimum();
+            this.maximum = computeMaximum();
             computeHistogram();
         } catch (IOException ex) {
             System.out.println("IO exception");
@@ -48,10 +50,14 @@ public class Volume {
     
     public void setVoxel(int x, int y, int z, short value) {
         data[x + dimX*(y + dimY*z)] = value;
+        this.minimum = value < this.minimum ? value : this.minimum;
+        this.maximum = value > this.maximum ? value : this.maximum;
     }
 
     public void setVoxel(int i, short value) {
         data[i] = value;
+        this.minimum = value < this.minimum ? value : this.minimum;
+        this.maximum = value > this.maximum ? value : this.maximum;
     }
     
     public short getVoxelInterpolate(double[] coord) {
@@ -167,20 +173,28 @@ public class Volume {
         return dimZ;
     }
 
-    public short getMinimum() {
-        short minimum = data[0];
+    private short computeMinimum() {
+        short min = data[0];
         for (int i=0; i<data.length; i++) {
-            minimum = data[i] < minimum ? data[i] : minimum;
+            min = data[i] < min ? data[i] : min;
         }
-        return minimum;
+        return min;
+    }
+    
+    public short getMinimum() {
+        return this.minimum;
     }
 
-    public short getMaximum() {
-        short maximum = data[0];
+    private short computeMaximum() {
+        short max = data[0];
         for (int i=0; i<data.length; i++) {
-            maximum = data[i] > maximum ? data[i] : maximum;
+            max = data[i] > max ? data[i] : max;
         }
-        return maximum;
+        return max;
+    }
+    
+    public short getMaximum() {
+        return this.maximum;
     }
  
     public int[] getHistogram() {
@@ -195,6 +209,7 @@ public class Volume {
     }
     
     private int dimX, dimY, dimZ;
+    private short minimum, maximum;
     private short[] data;
     private int[] histogram;
 }

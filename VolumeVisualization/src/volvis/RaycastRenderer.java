@@ -245,7 +245,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         */
         
         double[] dir = VectorMath.subtract(exitPoint, entryPoint);
-        double steps = VectorMath.length(dir) / sampleStep;
+        int steps = (int) (VectorMath.length(dir) / sampleStep);
         dir = VectorMath.normalize(dir);
         double[] step = VectorMath.multiply(dir, sampleStep);
         double volMax = volume.getMaximum();
@@ -322,6 +322,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         
         int increment=1;
         float sampleStep=0.2f;
+        //float sampleStep=0.99f;
         
 
 
