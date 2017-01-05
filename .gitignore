@@ -5,6 +5,8 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+private.properties
+private.xml
 
 #Java
 *.class
