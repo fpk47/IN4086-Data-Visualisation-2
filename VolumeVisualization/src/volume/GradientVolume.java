@@ -21,7 +21,7 @@ public class GradientVolume {
         dimZ = vol.getDimZ();
         data = new VoxelGradient[dimX * dimY * dimZ];
         compute();
-        maxmag = -1.0;
+        maxmag = -1.0f;
     }
 
     public VoxelGradient getGradient(int x, int y, int z) {
@@ -35,7 +35,7 @@ public class GradientVolume {
         
     }
     
-    public VoxelGradient getGradientNN(double[] coord) {
+    public VoxelGradient getGradientNN(float[] coord) {
         /* Nearest neighbour interpolation applied to provide the gradient */
         if (coord[0] < 0 || coord[0] > (dimX-2) || coord[1] < 0 || coord[1] > (dimY-2)
                 || coord[2] < 0 || coord[2] > (dimZ-2)) {
@@ -50,7 +50,7 @@ public class GradientVolume {
     }
 
     
-    public VoxelGradient getGradient(double[] coord) {
+    public VoxelGradient getGradient(float[] coord) {
     /* To be implemented: Returns trilinear interpolated gradient based on the precomputed gradients. 
      *   Use function interpolate. Use getGradientNN as bases */
 
@@ -90,7 +90,7 @@ public class GradientVolume {
      
     }
     
-    public double getMaxGradientMagnitude() {
+    public float getMaxGradientMagnitude() {
         /* to be implemented: Returns the maximum gradient magnitude*/
         return 0;
     }
@@ -99,5 +99,5 @@ public class GradientVolume {
     private VoxelGradient zero = new VoxelGradient();
     VoxelGradient[] data;
     Volume volume;
-    double maxmag;
+    float maxmag;
 }

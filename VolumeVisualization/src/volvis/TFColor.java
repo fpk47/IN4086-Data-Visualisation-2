@@ -9,13 +9,13 @@ package volvis;
  * @author michel
  */
 public class TFColor {
-    public double r, g, b, a;
+    public float r, g, b, a;
 
     public TFColor() {
-        r = g = b = a = 1.0;
+        r = g = b = a = 1.0f;
     }
     
-    public TFColor(double red, double green, double blue, double alpha) {
+    public TFColor(float red, float green, float blue, float alpha) {
         r = red;
         g = green;
         b = blue;

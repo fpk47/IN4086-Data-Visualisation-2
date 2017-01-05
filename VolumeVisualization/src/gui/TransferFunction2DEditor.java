@@ -26,9 +26,9 @@ public class TransferFunction2DEditor extends javax.swing.JPanel {
     private TransferFunction2DView tfView;
     public TriangleWidget triangleWidget;
     public int xbins, ybins;
-    public double[] histogram;
+    public float[] histogram;
     private short maxIntensity;
-    public double maxGradientMagnitude;
+    public float maxGradientMagnitude;
     private ArrayList<TFChangeListener> listeners = new ArrayList<TFChangeListener>();
 
     
@@ -47,7 +47,7 @@ public class TransferFunction2DEditor extends javax.swing.JPanel {
         labelMinVal.setText("0");
         labelMaxVal.setText(Integer.toString(maxIntensity));
 
-        triangleWidget = new TriangleWidget((short) (maxIntensity / 2), 0.2);
+        triangleWidget = new TriangleWidget((short) (maxIntensity / 2), 0.2f);
         setSelectedInfo();
     }
 
@@ -74,7 +74,7 @@ public class TransferFunction2DEditor extends javax.swing.JPanel {
         xbins = maxIntensity + 1;
         ybins = 300;
 
-        histogram = new double[xbins * ybins];
+        histogram = new float[xbins * ybins];
         int volumeSize = vol.getDimX() * vol.getDimY() * vol.getDimZ();
         for (int i = 0; i < volumeSize; i++) {
             short voxelVal = vol.getVoxel(i);
@@ -263,25 +263,25 @@ public class TransferFunction2DEditor extends javax.swing.JPanel {
         Color newColor = JColorChooser.showDialog(this, "Choose color", colorButton.getBackground());
         if (newColor != null) {
             colorButton.setBackground(newColor);
-            triangleWidget.color.r = newColor.getRed() / 255.0;
-            triangleWidget.color.g = newColor.getGreen() / 255.0;
-            triangleWidget.color.b = newColor.getBlue() / 255.0;
+            triangleWidget.color.r = newColor.getRed() / 255.0f;
+            triangleWidget.color.g = newColor.getGreen() / 255.0f;
+            triangleWidget.color.b = newColor.getBlue() / 255.0f;
             changed();
         }
     }//GEN-LAST:event_colorButtonActionPerformed
 
     private void opacityLabelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_opacityLabelActionPerformed
         try {
-            double value = Double.parseDouble(opacityLabel.getText());
+            float value = Float.parseFloat(opacityLabel.getText());
             if (value < 0) {
                 value = 0;
             } 
             if (value > 1.0) {
-                value = 1.0;
+                value = 1.0f;
             }
             triangleWidget.color.a = value;
         } catch (NumberFormatException e) {
-            triangleWidget.color.a = 0.2;
+            triangleWidget.color.a = 0.2f;
         }
         setSelectedInfo();
         changed();
@@ -290,14 +290,14 @@ public class TransferFunction2DEditor extends javax.swing.JPanel {
     public class TriangleWidget {
 
         public short baseIntensity;
-        public double radius;
+        public float radius;
         public TFColor color;
         
 
-        public TriangleWidget(short base, double r) {
+        public TriangleWidget(short base, float r) {
             this.baseIntensity = base;
             this.radius = r;
-            this.color = new TFColor(0.0, 204.0/255.0, 153.0/255.0, 0.3);
+            this.color = new TFColor(0.0f, 204.0f/255.0f, 153.0f/255.0f, 0.3f);
         }
     }
 

@@ -29,7 +29,7 @@ public class Visualization implements GLEventListener, TFChangeListener {
     ArrayList<Renderer> renderers;
     GLAutoDrawable canvas;
     int winWidth, winHeight;
-    double fov = 20.0;
+    float fov = 20.0f;
     TrackballInteractor trackball;
         
     public Visualization(GLAutoDrawable canvas) {
@@ -97,7 +97,7 @@ public class Visualization implements GLEventListener, TFChangeListener {
        }
        
        // multiply the current view transform (identity) with trackball transform
-       gl.glMultMatrixd(trackball.getTransformationMatrix(), 0);
+       gl.glMultMatrixf(trackball.getTransformationMatrix(), 0);
        
        
         // call the visualize() methods of all subscribed renderers

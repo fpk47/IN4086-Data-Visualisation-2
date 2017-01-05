@@ -60,7 +60,7 @@ public class Volume {
         this.maximum = value > this.maximum ? value : this.maximum;
     }
     
-    public short getVoxelInterpolate(double[] coord) {
+    public short getVoxelInterpolate(float[] coord) {
     /* to be implemented: get the trilinear interpolated value. 
         The current implementation gets the Nearest Neightbour */
         
@@ -79,34 +79,34 @@ public class Volume {
     }
     
     /**
-     * Round a double value up ( 7.4 --> 8, 7.7 --> 8)
+     * Round a float value up ( 7.4 --> 8, 7.7 --> 8)
      * @param value
      * @return up-rounded value (int)
      */
-    private static int roundUp( double value ){
+    private static int roundUp( float value ){
         return (int) (value + 0.5);
     } 
     
     /**
-     * Round a double value up ( 7.4 --> 7, 7.7 --> 7)
+     * Round a float value up ( 7.4 --> 7, 7.7 --> 7)
      * @param value
      * @return down-rounded value (int)
      */
-    private static int roundDown( double value ){
+    private static int roundDown( float value ){
         return (int) value;
     } 
     
-    public short getVoxelInterpolateNearestNeightbour(double[] coord) {
+    public short getVoxelInterpolateNearestNeightbour(float[] coord) {
         if (coord[0] < 0 || coord[0] > (dimX-1) || coord[1] < 0 || coord[1] > (dimY-1)
                 || coord[2] < 0 || coord[2] > (dimZ-1)) {
             return 0;
         }
         /* notice that in this framework we assume that the distance between neighbouring voxels is 1 in all directions*/
         
-        double totalDistance = 0.0;
-        double distances[] = new double[8];
-        double localCoord[] = new double[3];
-        double colorValues[] = new double[8];
+        float totalDistance = 0.0f;
+        float distances[] = new float[8];
+        float localCoord[] = new float[3];
+        float colorValues[] = new float[8];
         
         VectorMath.setVector( localCoord, roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] ) );
         distances[0] = VectorMath.distance( coord, localCoord );

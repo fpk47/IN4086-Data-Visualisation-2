@@ -63,9 +63,9 @@ public class TransferFunctionView extends javax.swing.JPanel {
         for (int i = 0; i < nrBins; i++) {
             maxBinHeigth = histogram[i] > maxBinHeigth ? histogram[i] : maxBinHeigth;
         }
-        double binWidth = (double) w / (double) nrBins;
+        float binWidth = (float) w / (float) nrBins;
         g2.setColor(Color.lightGray);
-        double scalingFactor = (double) h / (double) maxBinHeigth;
+        float scalingFactor = (float) h / (float) maxBinHeigth;
         for (int i = 0; i < nrBins; i++) {
             g2.fill(new Rectangle2D.Double(i*binWidth, h-scalingFactor*histogram[i], binWidth, scalingFactor*histogram[i]));
         }
@@ -79,7 +79,7 @@ public class TransferFunctionView extends javax.swing.JPanel {
             int s = cp.value;
             //System.out.println("s = " + s);
             TFColor color = cp.color;
-            double t = (double) (s - min) / (double) range;
+            float t = (float) (s - min) / (float) range;
             //System.out.println("t = " + t);
             int xpos = (int) (t * w);
             int ypos = h - (int) (color.a * h);
@@ -95,7 +95,7 @@ public class TransferFunctionView extends javax.swing.JPanel {
 
 
         for (int i = 0; i < w; i++) {
-            double t = (1.0 * i) / (w - 1);
+            float t = (1.0f * i) / (w - 1);
             int s = (int) (t * range + min);
             TFColor c = tfunc.getColor(s);
             g2.setColor(new Color((float) c.r, (float) c.g, (float) c.b));
@@ -111,7 +111,7 @@ public class TransferFunctionView extends javax.swing.JPanel {
 
         int s = cp.value;
         TFColor color = cp.color;
-        double t = (double) (s - min) / (double) range;
+        float t = (float) (s - min) / (float) range;
         int xpos = (int) (t * w);
         int ypos = h - (int) (color.a * h);
         Ellipse2D bounds = new Ellipse2D.Double(xpos - DOTSIZE / 2, ypos - DOTSIZE / 2, DOTSIZE, DOTSIZE);
@@ -174,14 +174,14 @@ public class TransferFunctionView extends javax.swing.JPanel {
 
             }
 
-            double w = getWidth();
-            double h = getHeight() - 30;
+            float w = getWidth();
+            float h = getHeight() - 30;
             int range = tfunc.getMaximum() - tfunc.getMinimum();
             int min = tfunc.getMinimum();
-            double t = dragEnd.x / w;
+            float t = dragEnd.x / w;
             int s = (int) ((t * range) + min);
             //System.out.println("s = " + s);
-            double a = (h - dragEnd.y) / h;
+            float a = (h - dragEnd.y) / h;
             //System.out.println("a = " + a);
 
             tfunc.updateControlPointScalar(selected, s);
@@ -227,16 +227,16 @@ public class TransferFunctionView extends javax.swing.JPanel {
             } else {
                 Point pos = e.getPoint();
                 if (pos.x >= 0 && pos.x < getWidth() && pos.y >= 0 && pos.y < (getHeight() - 30)) {
-                    double w = getWidth();
-                    double h = getHeight() - 30;
+                    float w = getWidth();
+                    float h = getHeight() - 30;
                     int range = tfunc.getMaximum() - tfunc.getMinimum();
                     int min = tfunc.getMinimum();
-                    double t = pos.x / w;
+                    float t = pos.x / w;
                     int s = (int) ((t * range) + min);
                     //System.out.println("s = " + s);
-                    double a = (h - pos.y) / h;
+                    float a = (h - pos.y) / h;
                     //System.out.println("a = " + a);
-                    selected = tfunc.addControlPoint(s, 0.0, 0.0, 0.0, a);
+                    selected = tfunc.addControlPoint(s, 0.0f, 0.0f, 0.0f, a);
                     TransferFunction.ControlPoint cp = controlPoints.get(selected);
                     editor.setSelectedInfo(selected, cp.value, cp.color.a, cp.color);
                     dragStart = e.getPoint();

@@ -172,21 +172,21 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
     }
     
-    private boolean intersectLinePlane(double[] plane_pos, double[] plane_normal,
-            double[] line_pos, double[] line_dir, double[] intersection) {
+    private boolean intersectLinePlane(float[] plane_pos, float[] plane_normal,
+            float[] line_pos, float[] line_dir, float[] intersection) {
 
-        double[] tmp = new double[3];
+        float[] tmp = new float[3];
 
         for (int i = 0; i < 3; i++) {
             tmp[i] = plane_pos[i] - line_pos[i];
         }
 
-        double denom = VectorMath.dotproduct(line_dir, plane_normal);
+        float denom = VectorMath.dotproduct(line_dir, plane_normal);
         if (Math.abs(denom) < 1.0e-8) {
             return false;
         }
 
-        double t = VectorMath.dotproduct(tmp, plane_normal) / denom;
+        float t = VectorMath.dotproduct(tmp, plane_normal) / denom;
 
         for (int i = 0; i < 3; i++) {
             intersection[i] = line_pos[i] + t * line_dir[i];
@@ -195,8 +195,8 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         return true;
     }
 
-    private boolean validIntersection(double[] intersection, double xb, double xe, double yb,
-            double ye, double zb, double ze) {
+    private boolean validIntersection(float[] intersection, float xb, float xe, float yb,
+            float ye, float zb, float ze) {
 
         return (((xb - 0.5) <= intersection[0]) && (intersection[0] <= (xe + 0.5))
                 && ((yb - 0.5) <= intersection[1]) && (intersection[1] <= (ye + 0.5))
@@ -204,9 +204,9 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
     }
 
-    private void intersectFace(double[] plane_pos, double[] plane_normal,
-            double[] line_pos, double[] line_dir, double[] intersection,
-            double[] entryPoint, double[] exitPoint) {
+    private void intersectFace(float[] plane_pos, float[] plane_normal,
+            float[] line_pos, float[] line_dir, float[] intersection,
+            float[] entryPoint, float[] exitPoint) {
 
         boolean intersect = intersectLinePlane(plane_pos, plane_normal, line_pos, line_dir,
                 intersection);
@@ -216,12 +216,12 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             //System.out.println("Intersection: " + intersection[0] + " " + intersection[1] + " " + intersection[2]);
             //System.out.println("line_dir * intersection: " + VectorMath.dotproduct(line_dir, plane_normal));
 
-            double xpos0 = 0;
-            double xpos1 = volume.getDimX();
-            double ypos0 = 0;
-            double ypos1 = volume.getDimY();
-            double zpos0 = 0;
-            double zpos1 = volume.getDimZ();
+            float xpos0 = 0;
+            float xpos1 = volume.getDimX();
+            float ypos0 = 0;
+            float ypos1 = volume.getDimY();
+            float zpos0 = 0;
+            float zpos1 = volume.getDimZ();
 
             if (validIntersection(intersection, xpos0, xpos1, ypos0, ypos1,
                     zpos0, zpos1)) {
@@ -239,41 +239,41 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     }
     
 
-      int traceRayMIP(double[] entryPoint, double[] exitPoint, double[] viewVec, double sampleStep) {
+      int traceRayMIP(float[] entryPoint, float[] exitPoint, float[] viewVec, float sampleStep) {
         /* to be implemented:  You need to sample the ray and implement the MIP
          * right now it just returns yellow as a color
         */
         
-        double[] dir = VectorMath.subtract(exitPoint, entryPoint);
+        float[] dir = VectorMath.subtract(exitPoint, entryPoint);
         int steps = (int) (VectorMath.length(dir) / sampleStep);
         dir = VectorMath.normalize(dir);
-        double[] step = VectorMath.multiply(dir, sampleStep);
-        double volMax = volume.getMaximum();
-        double max = Double.MIN_VALUE;
+        float[] step = VectorMath.multiply(dir, sampleStep);
+        float volMax = volume.getMaximum();
+        float max = Float.MIN_VALUE;
         for (int i = 0; i < steps; i++) {
-            double[] coord = VectorMath.add(VectorMath.multiply(step, i), entryPoint);
-            double val = volume.getVoxelInterpolate(coord);
+            float[] coord = VectorMath.add(VectorMath.multiply(step, i), entryPoint);
+            float val = volume.getVoxelInterpolate(coord);
             max = Math.max(max, val);
             if (max == volMax) {
                 break;
             }
         }
-        int color = doublesToColor(1, max/volMax, max/volMax, max/volMax);
+        int color = floatsToColor(1, max/volMax, max/volMax, max/volMax);
         return color;
     }
    
     
    
-    void computeEntryAndExit(double[] p, double[] viewVec, double[] entryPoint, double[] exitPoint) {
+    void computeEntryAndExit(float[] p, float[] viewVec, float[] entryPoint, float[] exitPoint) {
 
         for (int i = 0; i < 3; i++) {
             entryPoint[i] = -1;
             exitPoint[i] = -1;
         }
 
-        double[] plane_pos = new double[3];
-        double[] plane_normal = new double[3];
-        double[] intersection = new double[3];
+        float[] plane_pos = new float[3];
+        float[] plane_normal = new float[3];
+        float[] intersection = new float[3];
 
         VectorMath.setVector(plane_pos, volume.getDimX(), 0, 0);
         VectorMath.setVector(plane_normal, 1, 0, 0);
@@ -301,14 +301,14 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
     }
 
-    void raycast(double[] viewMatrix) {
+    void raycast(float[] viewMatrix) {
         /* To be partially implemented:
             This function traces the rays through the volume. Have a look and check that you understand how it works.
             You need to introduce here the different modalities MIP/Compositing/TF2/ etc...*/
 
-        double[] viewVec = new double[3];
-        double[] uVec = new double[3];
-        double[] vVec = new double[3];
+        float[] viewVec = new float[3];
+        float[] uVec = new float[3];
+        float[] vVec = new float[3];
         VectorMath.setVector(viewVec, viewMatrix[2], viewMatrix[6], viewMatrix[10]);
         VectorMath.setVector(uVec, viewMatrix[0], viewMatrix[4], viewMatrix[8]);
         VectorMath.setVector(vVec, viewMatrix[1], viewMatrix[5], viewMatrix[9]);
@@ -316,9 +316,9 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
         int imageCenter = image.getWidth() / 2;
 
-        double[] pixelCoord = new double[3];
-        double[] entryPoint = new double[3];
-        double[] exitPoint = new double[3];
+        float[] pixelCoord = new float[3];
+        float[] entryPoint = new float[3];
+        float[] exitPoint = new float[3];
         
         int increment=1;
         float sampleStep=0.2f;
@@ -337,11 +337,11 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             for (int i = 0; i < image.getWidth(); i += increment) {
                 // compute starting points of rays in a plane shifted backwards to a position behind the data set
                 pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter) - viewVec[0] * imageCenter
-                        + volume.getDimX() / 2.0;
+                        + volume.getDimX() / 2.0f;
                 pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter) - viewVec[1] * imageCenter
-                        + volume.getDimY() / 2.0;
+                        + volume.getDimY() / 2.0f;
                 pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter) - viewVec[2] * imageCenter
-                        + volume.getDimZ() / 2.0;
+                        + volume.getDimZ() / 2.0f;
 
                 computeEntryAndExit(pixelCoord, viewVec, entryPoint, exitPoint);
                 if ((entryPoint[0] > -1.0) && (exitPoint[0] > -1.0)) {
@@ -366,7 +366,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
     }
 
-    void slicer(double[] viewMatrix) {
+    void slicer(float[] viewMatrix) {
 
         // clear image
         for (int j = 0; j < image.getHeight(); j++) {
@@ -377,9 +377,9 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
         // vector uVec and vVec define a plane through the origin, 
         // perpendicular to the view vector viewVec
-        double[] viewVec = new double[3];
-        double[] uVec = new double[3];
-        double[] vVec = new double[3];
+        float[] viewVec = new float[3];
+        float[] uVec = new float[3];
+        float[] vVec = new float[3];
         VectorMath.setVector(viewVec, viewMatrix[2], viewMatrix[6], viewMatrix[10]);
         VectorMath.setVector(uVec, viewMatrix[0], viewMatrix[4], viewMatrix[8]);
         VectorMath.setVector(vVec, viewMatrix[1], viewMatrix[5], viewMatrix[9]);
@@ -387,12 +387,12 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         // image is square
         int imageCenter = image.getWidth() / 2;
 
-        double[] pixelCoord = new double[3];
-        double[] volumeCenter = new double[3];
+        float[] pixelCoord = new float[3];
+        float[] volumeCenter = new float[3];
         VectorMath.setVector(volumeCenter, volume.getDimX() / 2, volume.getDimY() / 2, volume.getDimZ() / 2);
 
         // sample on a plane through the origin of the volume data
-        double max = volume.getMaximum();
+        float max = volume.getMaximum();
         TFColor voxelColor = new TFColor();
         for (int j = 0; j < image.getHeight(); j++) {
             for (int i = 0; i < image.getWidth(); i++) {
@@ -411,7 +411,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                 voxelColor.r = val/max;
                 voxelColor.g = voxelColor.r;
                 voxelColor.b = voxelColor.r;
-                voxelColor.a = val > 0 ? 1.0 : 0.0;  // this makes intensity 0 completely transparent and the rest opaque
+                voxelColor.a = val > 0 ? 1.0f : 0.0f;  // this makes intensity 0 completely transparent and the rest opaque
                 
                 // Alternatively, apply the transfer function to obtain a color
                 /*TFColor auxColor = new TFColor(); 
@@ -433,14 +433,14 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     }
     
     /**
-     * Converts a set of doubles between 0 and 1 to an integer colour value in range 0 to 255.
+     * Converts a set of floats between 0 and 1 to an integer colour value in range 0 to 255.
      * @param a alpha channel
      * @param r red channel
      * @param g green channel
      * @param b blue channel
      * @return integer values containing the converted rgba colour.
      */
-    private int doublesToColor(double a, double r, double g, double b) {
+    private int floatsToColor(float a, float r, float g, float b) {
         int c_alpha = a <= 1.0 ? (int) Math.floor(a * 255) : 255;
         int c_red = r <= 1.0 ? (int) Math.floor(r * 255) : 255;
         int c_green = g <= 1.0 ? (int) Math.floor(g * 255) : 255;
@@ -460,7 +460,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
         drawBoundingBox(gl);
 
-        gl.glGetDoublev(GL2.GL_MODELVIEW_MATRIX, viewMatrix, 0);
+        gl.glGetFloatv(GL2.GL_MODELVIEW_MATRIX, viewMatrix, 0);
 
         long startTime = System.currentTimeMillis();
         if (slicerMode) {
@@ -470,7 +470,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         }
         
         long endTime = System.currentTimeMillis();
-        double runningTime = (endTime - startTime);
+        float runningTime = (endTime - startTime);
         panel.setSpeedLabel(Double.toString(runningTime));
 
         Texture texture = AWTTextureIO.newTexture(gl.getGLProfile(), image, false);
@@ -483,7 +483,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         // draw rendered image as a billboard texture
         texture.enable(gl);
         texture.bind(gl);
-        double halfWidth = image.getWidth() / 2.0;
+        float halfWidth = image.getWidth() / 2.0f;
         gl.glPushMatrix();
         gl.glLoadIdentity();
         gl.glBegin(GL2.GL_QUADS);
@@ -510,7 +510,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
     }
     private BufferedImage image;
-    private double[] viewMatrix = new double[4 * 4];
+    private float[] viewMatrix = new float[4 * 4];
 
     @Override
     public void changed() {

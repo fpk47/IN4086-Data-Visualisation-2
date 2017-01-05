@@ -52,14 +52,14 @@ public class TransferFunction2DView extends javax.swing.JPanel {
         g2.setColor(Color.white);
         g2.fillRect(0, 0, w, h);
         
-        double maxHistoMagnitude = ed.histogram[0];
+        float maxHistoMagnitude = ed.histogram[0];
         for (int i = 0; i < ed.histogram.length; i++) {
             maxHistoMagnitude = ed.histogram[i] > maxHistoMagnitude ? ed.histogram[i] : maxHistoMagnitude;
         }
         
-        double binWidth = (double) w / (double) ed.xbins;
-        double binHeight = (double) h / (double) ed.ybins;
-        maxHistoMagnitude = Math.log(maxHistoMagnitude);
+        float binWidth = (float) w / (float) ed.xbins;
+        float binHeight = (float) h / (float) ed.ybins;
+        maxHistoMagnitude = (float) Math.log(maxHistoMagnitude);
         
         
         for (int y = 0; y < ed.ybins; y++) {
@@ -116,9 +116,9 @@ public class TransferFunction2DView extends javax.swing.JPanel {
                 if (dragEnd.x >= getWidth()) {
                     dragEnd.x = getWidth() - 1;
                 }
-                double w = getWidth();
-                double h = getHeight();
-                double binWidth = (double) w / (double) ed.xbins;
+                float w = getWidth();
+                float h = getHeight();
+                float binWidth = (float) w / (float) ed.xbins;
                 if (selectedBaseControlPoint) {
                     ed.triangleWidget.baseIntensity = (short) (dragEnd.x / binWidth);
                 } else if (selectedRadiusControlPoint) {

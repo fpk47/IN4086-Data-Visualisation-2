@@ -22,8 +22,8 @@ public class TransferFunction {
         sRange = sMax - sMin;
         controlPoints = new ArrayList<ControlPoint>();
 
-        controlPoints.add(new ControlPoint(min, new TFColor(0.0, 0.0, 0.0, 0.0)));
-        controlPoints.add(new ControlPoint(max, new TFColor(1.0, 1.0, 1.0, 1.0)));
+        controlPoints.add(new ControlPoint(min, new TFColor(0.0f, 0.0f, 0.0f, 0.0f)));
+        controlPoints.add(new ControlPoint(max, new TFColor(1.0f, 1.0f, 1.0f, 1.0f)));
 
         LUTsize = sRange;
         LUT = new TFColor[LUTsize];
@@ -35,11 +35,11 @@ public class TransferFunction {
     
     public void setTestFunc() {
         // control points for orange data set
-        addControlPoint(0, 0.0, 0.0, 0.0, 0.0);
-        addControlPoint(40, 0.0, 0.0, 0.0, 0.0);
-        addControlPoint(75, 1.0, 0.666, 0.0, 1.0);
-        addControlPoint(103, 0.0, 0.0, 0.0, 0.5);
-        addControlPoint(205, 0.0, 0.0, 0.0, 0.0);
+        addControlPoint(0, 0.0f, 0.0f, 0.0f, 0.0f);
+        addControlPoint(40, 0.0f, 0.0f, 0.0f, 0.0f);
+        addControlPoint(75, 1.0f, 0.666f, 0.0f, 1.0f);
+        addControlPoint(103, 0.0f, 0.0f, 0.0f, 0.5f);
+        addControlPoint(205, 0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     public int getMinimum() {
@@ -65,11 +65,11 @@ public class TransferFunction {
     }
 
     
-    public int addControlPoint(int value, double r, double g, double b, double a) {
+    public int addControlPoint(int value, float r, float g, float b, float a) {
         if (value < sMin || value > sMax) {
             return -1;
         }
-        a = Math.floor(a*100)/100.0;
+        a = (float) ( Math.floor(a*100))/100.0f;
         
         ControlPoint cp = new ControlPoint(value, new TFColor(r, g, b, a));
         int idx = 0;
@@ -98,17 +98,17 @@ public class TransferFunction {
         buildLUT();
     }
     
-    public void updateControlPointAlpha(int index, double alpha) {
-        alpha = Math.floor(alpha*100)/100.0;
+    public void updateControlPointAlpha(int index, float alpha) {
+        alpha = (float) (Math.floor(alpha*100))/100.0f;
         controlPoints.get(index).color.a = alpha;
         buildLUT();
     }
     
     public void updateControlPointColor(int idx, Color c) {
         ControlPoint cp = controlPoints.get(idx);
-        cp.color.r = c.getRed()/255.0;
-        cp.color.g = c.getGreen()/255.0;
-        cp.color.b = c.getBlue()/255.0;
+        cp.color.r = c.getRed()/255.0f;
+        cp.color.g = c.getGreen()/255.0f;
+        cp.color.b = c.getBlue()/255.0f;
         buildLUT();
     }
     
@@ -129,9 +129,9 @@ public class TransferFunction {
             ControlPoint prev = controlPoints.get(i - 1);
             ControlPoint next = controlPoints.get(i);
             //System.out.println(prev.value + " " + prev.color + " -- " + next.value + " " + next.color);
-            double range = next.value - prev.value;
+            float range = next.value - prev.value;
             for (int k = prev.value; k <= next.value; k++) {
-                double frac = (k - prev.value) / range;
+                float frac = (k - prev.value) / range;
                 TFColor newcolor = new TFColor();
                 newcolor.r = prev.color.r + frac * (next.color.r - prev.color.r);
                 newcolor.g = prev.color.g + frac * (next.color.g - prev.color.g);

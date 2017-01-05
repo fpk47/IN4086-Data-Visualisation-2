@@ -13,20 +13,20 @@ import com.jogamp.opengl.GL2;
 public class TrackballInteractor {
 
     private int lmx = 0, lmy = 0;	//remembers last mouse location
-    private double[] trackballXform = new double[16];
-    private double[] lastPos = new double[3];
-    private double[] axis = new double[3];
-    private double angle;
+    private float[] trackballXform = new float[16];
+    private float[] lastPos = new float[3];
+    private float[] axis = new float[3];
+    private float angle;
     private int width, height;
     private boolean rotating = false;
 
     public TrackballInteractor(int width, int height) {
         this.width = width;
         this.height = height;
-        trackballXform[0] = 1.0;
-        trackballXform[5] = 1.0;
-        trackballXform[10] = 1.0;
-        trackballXform[15] = 1.0;
+        trackballXform[0] = 1.0f;
+        trackballXform[5] = 1.0f;
+        trackballXform[10] = 1.0f;
+        trackballXform[15] = 1.0f;
     }
 
     public void setDimensions(int w, int h) {
@@ -34,7 +34,7 @@ public class TrackballInteractor {
         height = h;
     }
 
-    public double[] getTransformationMatrix() {
+    public float[] getTransformationMatrix() {
         return trackballXform;
     }
 
@@ -52,17 +52,17 @@ public class TrackballInteractor {
         rotating = flag;
     }
 
-    private void trackball_ptov(int x, int y, int width, int height, double v[]) {
-        double d, a;
+    private void trackball_ptov(int x, int y, int width, int height, float v[]) {
+        float d, a;
 
         // project x,y onto a hemi-sphere centered within width, height
-        double radius = Math.min(width, height) - 20;
-        v[0] = (2.0 * x - width) / radius;
-        v[1] = (height - 2.0 * y) / radius;
+        float radius = Math.min(width, height) - 20;
+        v[0] = (2.0f * x - width) / radius;
+        v[1] = (height - 2.0f * y) / radius;
 
-        d = Math.sqrt(v[0] * v[0] + v[1] * v[1]);
-        v[2] = Math.cos((Math.PI / 2.0) * ((d < 1.0) ? d : 1.0));
-        a = 1.0 / Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+        d = (float) Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+        v[2] = (float) Math.cos((Math.PI / 2.0) * ((d < 1.0) ? d : 1.0));
+        a = (float) (1.0f / Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]));
         v[0] *= a;
         v[1] *= a;
         v[2] *= a;
@@ -71,16 +71,16 @@ public class TrackballInteractor {
 
     public void drag(int mx, int my) {
 
-        double[] curPos = new double[3];
+        float[] curPos = new float[3];
 
         trackball_ptov(mx, my, width, height, curPos);
 
-        double dx = curPos[0] - lastPos[0];
-        double dy = curPos[1] - lastPos[1];
-        double dz = curPos[2] - lastPos[2];
+        float dx = curPos[0] - lastPos[0];
+        float dy = curPos[1] - lastPos[1];
+        float dz = curPos[2] - lastPos[2];
 
         if ((dx != 0) || (dy != 0) || (dz != 0)) {
-            angle = 90.0 * Math.sqrt(dx * dx + dy * dy + dz * dz);
+            angle = 90.0f * (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
             axis[0] = lastPos[1] * curPos[2] - lastPos[2] * curPos[1];
             axis[1] = lastPos[2] * curPos[0] - lastPos[0] * curPos[2];
             axis[2] = lastPos[0] * curPos[1] - lastPos[1] * curPos[0];
@@ -95,8 +95,8 @@ public class TrackballInteractor {
         gl.glPushMatrix();
         gl.glLoadIdentity();
         gl.glRotated(angle, axis[0], axis[1], axis[2]);
-        gl.glMultMatrixd(trackballXform, 0);
-        gl.glGetDoublev(GL2.GL_MODELVIEW_MATRIX, trackballXform, 0);
+        gl.glMultMatrixf(trackballXform, 0);
+        gl.glGetFloatv(GL2.GL_MODELVIEW_MATRIX, trackballXform, 0);
         gl.glPopMatrix();
         setRotating(false);
     }

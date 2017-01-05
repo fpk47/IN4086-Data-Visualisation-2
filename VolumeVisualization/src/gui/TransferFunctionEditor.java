@@ -32,7 +32,7 @@ public class TransferFunctionEditor extends javax.swing.JPanel {
         histogramPanel.add(tfView, BorderLayout.CENTER);
     }
 
-    public void setSelectedInfo(int idx, int s, double a, TFColor c) {
+    public void setSelectedInfo(int idx, int s, float a, TFColor c) {
         selected = idx;
         scalarTextField.setText(Integer.toString(s));
         opacityTextField.setText(String.format("%.2f", a));
