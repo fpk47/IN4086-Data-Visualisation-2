@@ -134,6 +134,9 @@ public class VolVisApplication extends javax.swing.JFrame {
     private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
         // TODO add your handling code here:
         JFileChooser fc = new JFileChooser();
+        File dir = new File("./VolVisdata");
+        if (dir.exists())
+            fc.setCurrentDirectory(dir);
         fc.setFileFilter(new FileFilter() {
 
             @Override
