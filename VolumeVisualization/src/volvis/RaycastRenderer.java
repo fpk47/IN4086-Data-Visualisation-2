@@ -324,14 +324,11 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         float sampleStep=0.2f;
         //float sampleStep=0.99f;
         
-
-
         for (int j = 0; j < image.getHeight(); j++) {
             for (int i = 0; i < image.getWidth(); i++) {
                 image.setRGB(i, j, 0);
             }
         }
-
 
         for (int j = 0; j < image.getHeight(); j += increment) {
             for (int i = 0; i < image.getWidth(); i += increment) {
@@ -351,7 +348,10 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                                    
                     /* set color to green if MipMode- see slicer function*/
                    if(mipMode) 
-                        pixelColor= traceRayMIP(entryPoint,exitPoint,viewVec,sampleStep);
+                        pixelColor = traceRayMIP(entryPoint,exitPoint,viewVec,sampleStep);
+                   
+                   if(compositingMode)
+                       pixelColor =  traceRayComposite(entryPoint, exitPoint, viewVec, sampleStep);
                                 
                     for (int ii = i; ii < i + increment; ii++) {
                         for (int jj = j; jj < j + increment; jj++) {
@@ -362,8 +362,12 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
             }
         }
-
-
+    }
+    
+    int traceRayComposite(double[] entryPoint, double[] exitPoint, double[] viewVec, double sampleStep) {
+        
+        
+        return doublesToColor(1, 0, 1, 0);
     }
 
     void slicer(float[] viewMatrix) {
