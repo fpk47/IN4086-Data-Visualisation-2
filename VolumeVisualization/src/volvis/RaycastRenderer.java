@@ -240,19 +240,15 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     
 
       int traceRayMIP(float[] entryPoint, float[] exitPoint, float[] viewVec, float sampleStep) {
-        /* to be implemented:  You need to sample the ray and implement the MIP
-         * right now it just returns yellow as a color
-        */
-        
         float[] dir = VectorMath.subtract(exitPoint, entryPoint);
         int steps = (int) (VectorMath.length(dir) / sampleStep);
         dir = VectorMath.normalize(dir);
         float[] step = VectorMath.multiply(dir, sampleStep);
         float volMax = volume.getMaximum();
-        float max = Float.MIN_VALUE;
+        int max = Integer.MIN_VALUE;
         for (int i = 0; i < steps; i++) {
             float[] coord = VectorMath.add(VectorMath.multiply(step, i), entryPoint);
-            float val = volume.getVoxelInterpolate(coord);
+            short val = volume.getVoxelInterpolate(coord);
             max = Math.max(max, val);
             if (max == volMax) {
                 break;
@@ -322,7 +318,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         
         int increment=1;
         float sampleStep=0.2f;
-        //float sampleStep=0.99f;
+        //float sampleStep=1f;
         
         for (int j = 0; j < image.getHeight(); j++) {
             for (int i = 0; i < image.getWidth(); i++) {
@@ -364,10 +360,44 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         }
     }
     
-    int traceRayComposite(double[] entryPoint, double[] exitPoint, double[] viewVec, double sampleStep) {
+    /**
+     * Using https://books.google.nl/books?id=GlOzDQAAQBAJ&pg=PA591&lpg=PA591&dq=compositing+front+to+back+pseudocode&source=bl&ots=F9YsDdfm92&sig=bt-kYkUr8gl1U-pCzCpYkyqbEg4&hl=en&sa=X&ved=0ahUKEwi_0YujqLrRAhXKOxoKHaYPD-UQ6AEIKDAC#v=onepage&q=compositing%20front%20to%20back%20pseudocode&f=false
+     * and https://users.cg.tuwien.ac.at/bruckner/homepage/content/mastersthesis/html/node35.html as basis.
+     * @param entryPoint
+     * @param exitPoint
+     * @param viewVec
+     * @param sampleStep
+     * @return 
+     */
+    int traceRayComposite(float[] entryPoint, float[] exitPoint, float[] viewVec, float sampleStep) {
+        float[] dir = VectorMath.subtract(exitPoint, entryPoint);
+        int steps = (int) (VectorMath.length(dir) / sampleStep);
+        dir = VectorMath.normalize(dir);
+        float[] step = VectorMath.multiply(dir, sampleStep);
         
+        TFColor color = new TFColor(0,0,0,1);
+        TFColor background = new TFColor(0,0,0,1);
+        float opacity = 0;
+        float error = 0.01F;
         
-        return doublesToColor(1, 0, 1, 0);
+        for (int i = 0; i < steps; i++) {
+            float[] coord = VectorMath.add(VectorMath.multiply(step, i), entryPoint);
+            short val = volume.getVoxelInterpolate(coord);
+            TFColor auxColor = tFunc.getColor(val);
+            float alpha = auxColor.a;
+            // Calculate corrected alpha for when samplestep does not equal 1.
+            if (sampleStep != 1)
+                alpha = (float) (1 - Math.pow(1-auxColor.a, sampleStep));
+            
+            color = TFColor.add(color, TFColor.multiply(auxColor, alpha * (1-opacity)));
+            opacity = opacity + (1-opacity) * alpha;
+            if (opacity > 1 - error) {
+                break;
+            }
+        }
+        color = TFColor.add(color, TFColor.multiply(background, 1 - opacity));
+        
+        return floatsToColor(1, color.r, color.g, color.b);
     }
 
     void slicer(float[] viewMatrix) {
@@ -409,19 +439,19 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
                 
                 
-                int val = volume.getVoxelInterpolateNearestNeightbour(pixelCoord);
-                //int val = volume.getVoxelInterpolate(pixelCoord);
+                //int val = volume.getVoxelInterpolateNearestNeightbour(pixelCoord);
+                int val = volume.getVoxelInterpolate(pixelCoord);
                 // Map the intensity to a grey value by linear scaling
-                voxelColor.r = val/max;
+                /*voxelColor.r = val/max;
                 voxelColor.g = voxelColor.r;
                 voxelColor.b = voxelColor.r;
                 voxelColor.a = val > 0 ? 1.0f : 0.0f;  // this makes intensity 0 completely transparent and the rest opaque
-                
+                */
                 // Alternatively, apply the transfer function to obtain a color
-                /*TFColor auxColor = new TFColor(); 
+                TFColor auxColor = new TFColor(); 
                 auxColor = tFunc.getColor(val);
                 voxelColor.r=auxColor.r;voxelColor.g=auxColor.g;voxelColor.b=auxColor.b;voxelColor.a=auxColor.a;
-                */
+                
                 
                 // BufferedImage expects a pixel color packed as ARGB in an int
                 int c_alpha = voxelColor.a <= 1.0 ? (int) Math.floor(voxelColor.a * 255) : 255;
