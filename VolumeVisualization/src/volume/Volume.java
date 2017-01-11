@@ -60,7 +60,7 @@ public class Volume {
         this.maximum = value > this.maximum ? value : this.maximum;
     }
     
-    public short getVoxelInterpolate(float[] coord) {
+    public short getVoxelNearestNeightbour(float[] coord) {
     /* to be implemented: get the trilinear interpolated value. 
         The current implementation gets the Nearest Neightbour */
         
@@ -96,7 +96,7 @@ public class Volume {
         return (int) value;
     } 
     
-    public short getVoxelInterpolateNearestNeightbour(float[] coord) {
+    public short getVoxelInterpolate(float[] coord) {
         if (coord[0] < 0 || coord[0] > (dimX-1) || coord[1] < 0 || coord[1] > (dimY-1)
                 || coord[2] < 0 || coord[2] > (dimZ-1)) {
             return 0;
@@ -135,7 +135,7 @@ public class Volume {
         
         VectorMath.setVector( localCoord, roundDown( coord[0] ), roundUp( coord[1] ), roundDown( coord[2] ) );
         distances[5] = VectorMath.distance( coord, localCoord );
-        totalDistance += distances[6];
+        totalDistance += distances[5];
         colorValues[5] = getVoxel( VectorMath.castToInteger( localCoord) );
         
         VectorMath.setVector( localCoord, roundDown( coord[0] ), roundDown( coord[1] ), roundUp( coord[2] ) );
@@ -152,6 +152,10 @@ public class Volume {
         
         for ( int i = 0; i < 8; i++ ){
             result += ( distances[i] / totalDistance ) * colorValues[i];
+        }
+        
+        if ( result > 255 ){
+            System.err.println("too high.." + result  );
         }
         
         return (short) result;
