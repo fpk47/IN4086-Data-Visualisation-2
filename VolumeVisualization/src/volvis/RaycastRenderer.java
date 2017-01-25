@@ -12,11 +12,14 @@ import gui.RaycastRendererPanel;
 import gui.TransferFunction2DEditor;
 import gui.TransferFunctionEditor;
 import java.awt.image.BufferedImage;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import util.TFChangeListener;
 import util.VectorMath;
 import volume.GradientVolume;
 import volume.Volume;
 import volume.VoxelGradient;
+import java.util.ArrayList;
 
 /**
  *
@@ -34,11 +37,11 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     TransferFunction tFunc;
     TransferFunctionEditor tfEditor;
     TransferFunction2DEditor tfEditor2D;
-    private boolean mipMode = false;
-    private boolean slicerMode = true;
-    private boolean compositingMode = false;
-    private boolean tf2dMode = false;
-    private boolean shadingMode = false;
+    public boolean mipMode = false;
+    public boolean slicerMode = true;
+    public boolean compositingMode = false;
+    public boolean tf2dMode = false;
+    public boolean shadingMode = false;
     
     public RaycastRenderer() {
         panel = new RaycastRendererPanel(this);
@@ -294,10 +297,9 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         VectorMath.setVector(plane_pos, 0, 0, 0);
         VectorMath.setVector(plane_normal, 0, 0, -1);
         intersectFace(plane_pos, plane_normal, p, viewVec, intersection, entryPoint, exitPoint);
-
     }
 
-    void raycast(float[] viewMatrix) {
+    void raycast(float[] viewMatrix) {        
         /* To be partially implemented:
             This function traces the rays through the volume. Have a look and check that you understand how it works.
             You need to introduce here the different modalities MIP/Compositing/TF2/ etc...*/
@@ -309,55 +311,76 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         VectorMath.setVector(uVec, viewMatrix[0], viewMatrix[4], viewMatrix[8]);
         VectorMath.setVector(vVec, viewMatrix[1], viewMatrix[5], viewMatrix[9]);
 
-
+        int totalSizeX = image.getWidth();
+        int totalSizeY = image.getHeight();
+        
+        int increment = 1;
+        
+        if ( DragState.isDragged() ){
+            increment = 10;
+        } 
+        
+        DragState.setDragged(false);
+        
+        float sampleStep = 0.2f;
         int imageCenter = image.getWidth() / 2;
 
-        float[] pixelCoord = new float[3];
-        float[] entryPoint = new float[3];
-        float[] exitPoint = new float[3];
+        ArrayList<CustomThread> threads = new ArrayList<CustomThread>();
         
-        int increment=1;
-        float sampleStep=0.2f;
-        //float sampleStep=1f;
+        int splitCount = 2;
+        int restX = totalSizeX % splitCount;
+        int restY = totalSizeY % splitCount;
+        int sizeX = totalSizeX / splitCount;
+        int sizeY = totalSizeY / splitCount;
         
-        for (int j = 0; j < image.getHeight(); j++) {
-            for (int i = 0; i < image.getWidth(); i++) {
-                image.setRGB(i, j, 0);
+        for ( int x = 0; x < splitCount; x++ ){
+            for ( int y = 0; y < splitCount; y++ ){
+                int currentX = sizeX * x;
+                int currentY = sizeY * y;
+
+                int tempSizeX = sizeX;
+                int tempSizeY = sizeY;
+                
+                if ( x == splitCount - 1 )  tempSizeX += restX;
+                if ( y == splitCount - 1 )  tempSizeY += restY;
+   
+                CustomThread customThread = new CustomThread(x + " " + y, volume, this, viewMatrix, viewVec, uVec, vVec, increment, sampleStep, imageCenter, currentX, currentY, tempSizeX, tempSizeY );
+                threads.add( customThread );
+                customThread.start();
             }
         }
 
-        for (int j = 0; j < image.getHeight(); j += increment) {
-            for (int i = 0; i < image.getWidth(); i += increment) {
-                // compute starting points of rays in a plane shifted backwards to a position behind the data set
-                pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter) - viewVec[0] * imageCenter
-                        + volume.getDimX() / 2.0f;
-                pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter) - viewVec[1] * imageCenter
-                        + volume.getDimY() / 2.0f;
-                pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter) - viewVec[2] * imageCenter
-                        + volume.getDimZ() / 2.0f;
-
-                computeEntryAndExit(pixelCoord, viewVec, entryPoint, exitPoint);
-                if ((entryPoint[0] > -1.0) && (exitPoint[0] > -1.0)) {
-                    //System.out.println("Entry: " + entryPoint[0] + " " + entryPoint[1] + " " + entryPoint[2]);
-                    //System.out.println("Exit: " + exitPoint[0] + " " + exitPoint[1] + " " + exitPoint[2]);
-                    int pixelColor = 0;
-                                   
-                    /* set color to green if MipMode- see slicer function*/
-                   if(mipMode) 
-                        pixelColor = traceRayMIP(entryPoint,exitPoint,viewVec,sampleStep);
-                   
-                   if(compositingMode)
-                       pixelColor =  traceRayComposite(entryPoint, exitPoint, viewVec, sampleStep);
-                                
-                    for (int ii = i; ii < i + increment; ii++) {
-                        for (int jj = j; jj < j + increment; jj++) {
-                            image.setRGB(ii, jj, pixelColor);
-                        }
-                    }
+          
+        boolean done = false;
+        while( !done ){
+            done = true;
+            
+            for ( CustomThread customThread : threads ){
+                if ( customThread.isRunning() ){
+                    done = false;
                 }
-
             }
+           
+            try{ Thread.sleep(5); } catch (InterruptedException ex) { System.out.println("ERROR: void raycast(float[] viewMatrix)"); }
         }
+    
+        
+    
+        for ( CustomThread customThread : threads ){
+            int[][] data = customThread.getData();
+            int tempX = customThread.startX;
+            int tempY = customThread.startY;
+            int tempSizeX = customThread.sizeX;
+            int tempSizeY = customThread.sizeY;
+            
+            for ( int x = tempX; x < tempX + tempSizeX; x++ ){
+                for ( int y = tempY; y < tempY + tempSizeY; y++ ){
+                    image.setRGB(x, y, data[x-tempX][y-tempY] );
+                }
+            }      
+        }
+        
+    
     }
     
     /**
@@ -545,7 +568,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         }
 
     }
-    private BufferedImage image;
+    public BufferedImage image;
     private float[] viewMatrix = new float[4 * 4];
 
     @Override

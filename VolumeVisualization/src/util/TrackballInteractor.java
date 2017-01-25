@@ -5,6 +5,7 @@
 package util;
 
 import com.jogamp.opengl.GL2;
+import volvis.DragState;
 
 /**
  *
@@ -70,7 +71,7 @@ public class TrackballInteractor {
     }
 
     public void drag(int mx, int my) {
-
+        DragState.setDragged(true);
         float[] curPos = new float[3];
 
         trackball_ptov(mx, my, width, height, curPos);

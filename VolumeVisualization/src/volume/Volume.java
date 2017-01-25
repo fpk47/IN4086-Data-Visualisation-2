@@ -108,47 +108,53 @@ public class Volume {
         float localCoord[] = new float[3];
         float colorValues[] = new float[8];
         
-        VectorMath.setVector( localCoord, roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] ) );
+        int[] roundUp = { roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] )};
+        int[] roundDown = { roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] )};
+        
+        VectorMath.setVector( localCoord, roundUp[0], roundUp[1], roundUp[2] );
         distances[0] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[0];
+        
         colorValues[0] = getVoxel( VectorMath.castToInteger( localCoord) );
         
-        VectorMath.setVector( localCoord, roundUp( coord[0] ), roundUp( coord[1] ), roundDown( coord[2] ) );
+        VectorMath.setVector( localCoord, roundUp[0], roundUp[1], roundDown[2] );
         distances[1] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[1];
-        colorValues[1] = getVoxel( VectorMath.castToInteger( localCoord) );
+        colorValues[1] = getVoxel( roundUp[0], roundUp[1], roundDown[2] );
         
-        VectorMath.setVector( localCoord, roundUp( coord[0] ), roundDown( coord[1] ), roundUp( coord[2] ) );
+        VectorMath.setVector( localCoord, roundUp[0], roundDown[1], roundUp[2] );
         distances[2] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[2];
-        colorValues[2] = getVoxel( VectorMath.castToInteger( localCoord) );
+        colorValues[2] = getVoxel( roundUp[0], roundDown[1], roundUp[2] );
         
-        VectorMath.setVector( localCoord, roundUp( coord[0] ), roundDown( coord[1] ), roundDown( coord[2] ) );
+        VectorMath.setVector( localCoord, roundUp[0], roundDown[1], roundDown[2] );
         distances[3] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[3];
-        colorValues[3] = getVoxel( VectorMath.castToInteger( localCoord) );
+        colorValues[3] = getVoxel( roundUp[0], roundDown[1], roundDown[2] );
         
-        VectorMath.setVector( localCoord, roundDown( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] ) );
+        VectorMath.setVector( localCoord, roundDown[0], roundUp[1], roundUp[2] );
         distances[4] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[4];
-        colorValues[4] = getVoxel( VectorMath.castToInteger( localCoord) );
+        colorValues[4] = getVoxel( roundDown[0], roundUp[1], roundUp[2] );
         
-        VectorMath.setVector( localCoord, roundDown( coord[0] ), roundUp( coord[1] ), roundDown( coord[2] ) );
+        VectorMath.setVector( localCoord, roundDown[0], roundUp[1], roundDown[2] );
         distances[5] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[5];
-        colorValues[5] = getVoxel( VectorMath.castToInteger( localCoord) );
+        colorValues[5] = getVoxel( roundDown[0], roundUp[1], roundDown[2] );
         
-        VectorMath.setVector( localCoord, roundDown( coord[0] ), roundDown( coord[1] ), roundUp( coord[2] ) );
+        VectorMath.setVector( localCoord, roundDown[0], roundDown[1], roundUp[2] );
         distances[6] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[6];
-        colorValues[6] = getVoxel( VectorMath.castToInteger( localCoord) );
+        colorValues[6] = getVoxel( roundDown[0], roundDown[1], roundUp[2] );
         
-        VectorMath.setVector( localCoord, roundDown( coord[0] ), roundDown( coord[1] ), roundDown( coord[2] ) );
+        VectorMath.setVector( localCoord, roundDown[0], roundDown[1], roundDown[2] );
         distances[7] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[7];
-        colorValues[7] = getVoxel( VectorMath.castToInteger( localCoord) );
+        colorValues[7] = getVoxel( roundDown[0], roundDown[1], roundDown[2] );
         
         int result = 0;
+        
+        
         
         for ( int i = 0; i < 8; i++ ){
             result += ( distances[i] / totalDistance ) * colorValues[i];

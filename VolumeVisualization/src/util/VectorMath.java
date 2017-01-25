@@ -27,10 +27,9 @@ public class VectorMath {
     }
 
     // compute distance between vectors v and w
-    public static float distance(float[] v, float[] w) {
-        float[] tmp = new float[3];
-        VectorMath.setVector(tmp, v[0]-w[0], v[1]-w[1], v[2]-w[2]);
-        return (float) Math.sqrt(VectorMath.dotproduct(tmp, tmp));
+    public static float distance( float[] v, float[] w) {
+        double result = Math.pow( v[0]-w[0], 2 ) + Math.pow( v[1]-w[1], 2 ) + Math.pow( v[2]-w[2], 2 );
+        return (float) Math.sqrt(result);
     }
 
     // compute dotproduct of v and w
