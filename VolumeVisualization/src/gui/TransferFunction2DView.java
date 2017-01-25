@@ -65,7 +65,7 @@ public class TransferFunction2DView extends javax.swing.JPanel {
         for (int y = 0; y < ed.ybins; y++) {
             for (int x = 0; x < ed.xbins; x++) {
                 if (ed.histogram[y * ed.xbins + x] > 0) {
-                    int intensity = (int) Math.floor(255 * (1.0 - Math.log(ed.histogram[y * ed.xbins + x]) / maxHistoMagnitude));
+                    int intensity = (int) Math.floor(255 * (1.0 - ((float) Math.log(ed.histogram[y * ed.xbins + x])) / maxHistoMagnitude));
                     g2.setColor(new Color(intensity, intensity, intensity));
                     g2.fill(new Rectangle2D.Double(x * binWidth, h - (y * binHeight), binWidth, binHeight));
                 }
