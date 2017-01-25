@@ -108,14 +108,13 @@ public class Volume {
         float localCoord[] = new float[3];
         float colorValues[] = new float[8];
         
-        int[] roundUp = { roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] )};
         int[] roundDown = { roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] )};
-        
+        int[] roundUp = { roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] )};
+       
         VectorMath.setVector( localCoord, roundUp[0], roundUp[1], roundUp[2] );
         distances[0] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[0];
-        
-        colorValues[0] = getVoxel( VectorMath.castToInteger( localCoord) );
+        colorValues[0] = getVoxel( roundUp[0], roundUp[1], roundUp[2] );
         
         VectorMath.setVector( localCoord, roundUp[0], roundUp[1], roundDown[2] );
         distances[1] = VectorMath.distance( coord, localCoord );
