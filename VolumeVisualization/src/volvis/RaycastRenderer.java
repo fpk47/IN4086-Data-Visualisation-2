@@ -404,9 +404,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             }
         }
 
-        
-        
-   
         for ( CustomThread thread : threads ){
             if ( firstTime ){
                 thread.start();
@@ -417,7 +414,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         } 
         
              firstTime = false;
-        
           
         boolean done = false;
         while( !done ){
@@ -432,8 +428,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             try{ Thread.sleep(5); } catch (InterruptedException ex) { System.out.println("ERROR: void raycast(float[] viewMatrix)"); }
         }
     
-        
-    
         for ( CustomThread customThread : threads ){
             int[][] data = customThread.getData();
             int tempX = customThread.startX;
@@ -447,8 +441,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                 }
             }      
         }
-        
-    
     }
     
     /**
@@ -475,6 +467,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             float[] coord = VectorMath.add(VectorMath.multiply(step, i), entryPoint);
             short val = volume.getVoxelInterpolate(coord);
             TFColor auxColor = tFunc.getColor(val);
+            
             float alpha = auxColor.a;
             // Calculate corrected alpha for when samplestep does not equal 1.
             if (sampleStep != 1)
@@ -543,7 +536,10 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                 // Alternatively, apply the transfer function to obtain a color
                 TFColor auxColor = new TFColor(); 
                 auxColor = tFunc.getColor(val);
-                voxelColor.r=auxColor.r;voxelColor.g=auxColor.g;voxelColor.b=auxColor.b;voxelColor.a=auxColor.a;
+                voxelColor.r=auxColor.r;
+                voxelColor.g=auxColor.g;
+                voxelColor.b=auxColor.b;
+                voxelColor.a=auxColor.a;
                 
                 
                 // BufferedImage expects a pixel color packed as ARGB in an int
