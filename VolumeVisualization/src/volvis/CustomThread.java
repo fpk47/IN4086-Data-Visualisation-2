@@ -145,7 +145,7 @@ public class CustomThread extends Thread {
                    if(raycastRenderer.mipMode) 
                         pixelColor = raycastRenderer.traceRayMIP(entryPoint,exitPoint,viewVec,sampleStep);
 
-                   if(raycastRenderer.compositingMode)
+                   if(raycastRenderer.compositingMode || raycastRenderer.tf2dMode)
                        pixelColor = raycastRenderer.traceRayComposite(entryPoint, exitPoint, viewVec, sampleStep);
 
         

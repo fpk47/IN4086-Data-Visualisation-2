@@ -466,7 +466,14 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         for (int i = 0; i < steps; i++) {
             float[] coord = VectorMath.add(VectorMath.multiply(step, i), entryPoint);
             short val = volume.getVoxelInterpolate(coord);
-            TFColor auxColor = tFunc.getColor(val);
+            
+            TFColor auxColor;
+            if (compositingMode) {
+                auxColor = tFunc.getColor(val);
+            }
+            else {
+                auxColor = transfer2dCalc(val, gradients.getGradient(coord));
+            }
             
             float alpha = auxColor.a;
             // Calculate corrected alpha for when samplestep does not equal 1.
@@ -482,6 +489,25 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         color = TFColor.add(color, TFColor.multiply(background, 1 - opacity));
         
         return floatsToColor(1, color.r, color.g, color.b);
+    }
+    
+    private TFColor transfer2dCalc(short value, VoxelGradient gradient) {
+        float f = tfEditor2D.triangleWidget.baseIntensity;
+        float r = tfEditor2D.triangleWidget.radius;
+        TFColor color = tfEditor2D.triangleWidget.color;
+        
+        float alpha = 0;
+        if (gradient.mag == 0 && value == f) {
+            alpha = 1;
+        }
+        
+        float rGradient = r*gradient.mag;
+        
+        if (gradient.mag>0 && value - rGradient <= f  && value + rGradient >= f) {
+            alpha = 1.0f - (float) Math.abs((f - value) / rGradient);
+        }
+        
+        return new TFColor(color.r, color.g, color.b, color.a*alpha);
     }
 
     void slicer(float[] viewMatrix) {
