@@ -353,7 +353,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         VectorMath.setVector(viewVec, viewMatrix[2], viewMatrix[6], viewMatrix[10]);
         VectorMath.setVector(uVec, viewMatrix[0], viewMatrix[4], viewMatrix[8]);
         VectorMath.setVector(vVec, viewMatrix[1], viewMatrix[5], viewMatrix[9]);
-
+System.out.println(viewVec[0] + ", " +viewVec[1] + ", " +viewVec[2]);
         int totalSizeX = image.getWidth();
         int totalSizeY = image.getHeight();
         
@@ -399,9 +399,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             }
         }
 
-        
-        
-   
         for ( CustomThread thread : threads ){
             if ( firstTime ){
                 thread.start();
@@ -412,7 +409,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         } 
         
              firstTime = false;
-        
           
         boolean done = false;
         while( !done ){
@@ -427,8 +423,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             try{ Thread.sleep(5); } catch (InterruptedException ex) { System.out.println("ERROR: void raycast(float[] viewMatrix)"); }
         }
     
-        
-    
         for ( CustomThread customThread : threads ){
             int[][] data = customThread.getData();
             int tempX = customThread.startX;
@@ -442,8 +436,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                 }
             }      
         }
-        
-    
     }
     
     /**
@@ -495,6 +487,17 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             val = (short) volume.getVoxelInterpolate3(coord);
             TFColor auxColor = tFunc.getColor(val);
             alpha = auxColor.a;
+
+            if (compositingMode) {
+                auxColor = tFunc.getColor(val);
+            }
+            else {
+                auxColor = transfer2dCalc(val, gradients.getGradient(coord));
+            }
+            if (shadingMode) {
+                auxColor = phongShading(auxColor, viewVec, gradients.getGradient(coord));
+            }
+           
             // Calculate corrected alpha for when samplestep does not equal 1.
 
             if (sampleStep != 1.0f)
@@ -514,6 +517,61 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         color = TFColor.add(color, TFColor.multiply(background, 1 - opacity));
         
         return floatsToColor(1, color.r, color.g, color.b);
+    }
+    
+    private TFColor transfer2dCalc(short value, VoxelGradient gradient) {
+        float f = tfEditor2D.triangleWidget.baseIntensity;
+        float r = tfEditor2D.triangleWidget.radius;
+        TFColor color = tfEditor2D.triangleWidget.color;
+        
+        float alpha = 0;
+        if (gradient.mag == 0 && value == f) {
+            alpha = 1;
+        }
+        
+        float rGradient = r*gradient.mag;
+        
+        if (gradient.mag>0 && value - rGradient <= f  && value + rGradient >= f) {
+            alpha = 1.0f - (float) Math.abs((f - value) / rGradient);
+        }
+        
+        return new TFColor(color.r, color.g, color.b, color.a*alpha);
+    }
+    
+    private static final float AMBIENT = 0.3f;
+    private static final float DIFFUSE = 0.7f;
+    private static final float SPECULAR = 0.2f;
+    private static final float SHININESS = 1f;
+    /**
+     * 
+     * @param input
+     * @param viewVec
+     * @return 
+     */
+    private TFColor phongShading(TFColor input, float[] viewVec, VoxelGradient gradient) {
+        float[] normal = {gradient.x / gradient.mag, gradient.y / gradient.mag, gradient.z / gradient.mag};
+        
+        // We position our lightsource as a sun, always positioned behind the viewer
+        float[] dirToLight = VectorMath.normalize(viewVec);
+        dirToLight = VectorMath.multiply(dirToLight, -1);
+        float diff = VectorMath.dotproduct(normal, dirToLight);
+        
+        float spec = VectorMath.dotproduct(dirToLight, normal);
+        
+        float intensity = 0.0f;
+        intensity += AMBIENT;
+        if (diff > 0) {
+            intensity += DIFFUSE*diff;
+            if (spec > 0) {
+                intensity += SPECULAR*(float)Math.pow(spec, SHININESS);
+            }
+        }
+        
+        intensity = Math.min(1, intensity);
+        
+        TFColor res = TFColor.multiply(input, intensity);
+        res.a = input.a;
+        return res;
     }
 
     void slicer(float[] viewMatrix) {
@@ -568,7 +626,10 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                 // Alternatively, apply the transfer function to obtain a color
                 TFColor auxColor = new TFColor(); 
                 auxColor = tFunc.getColor(val);
-                voxelColor.r=auxColor.r;voxelColor.g=auxColor.g;voxelColor.b=auxColor.b;voxelColor.a=auxColor.a;
+                voxelColor.r=auxColor.r;
+                voxelColor.g=auxColor.g;
+                voxelColor.b=auxColor.b;
+                voxelColor.a=auxColor.a;
                 
                 
                 // BufferedImage expects a pixel color packed as ARGB in an int

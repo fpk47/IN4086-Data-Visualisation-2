@@ -84,6 +84,14 @@ public class VectorMath {
         return r;
     }
     
+    public static float[] divide(float[] v, float s) {
+        float[] r = new float[3];
+        r[0] = v[0] / s;
+        r[1] = v[1] / s;
+        r[2] = v[2] / s;
+        return r;
+    }
+    
     public static float[] normalize(float[] v) {
         float len = length(v);
         float[] r = new float[3];
