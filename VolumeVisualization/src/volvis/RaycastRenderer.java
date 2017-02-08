@@ -513,10 +513,10 @@ System.out.println(viewVec[0] + ", " +viewVec[1] + ", " +viewVec[2]);
         return new TFColor(color.r, color.g, color.b, color.a*alpha);
     }
     
-    private static float ambient = 0.1f;
-    private static float diffuse = 0.7f;
-    private static float specular = 0.2f;
-    private static float shininess = 1f;
+    private static final float AMBIENT = 0.3f;
+    private static final float DIFFUSE = 0.7f;
+    private static final float SPECULAR = 0.2f;
+    private static final float SHININESS = 1f;
     /**
      * 
      * @param input
@@ -534,16 +534,15 @@ System.out.println(viewVec[0] + ", " +viewVec[1] + ", " +viewVec[2]);
         float spec = VectorMath.dotproduct(dirToLight, normal);
         
         float intensity = 0.0f;
-        intensity += ambient;
+        intensity += AMBIENT;
         if (diff > 0) {
-            intensity += diffuse*diff;
+            intensity += DIFFUSE*diff;
             if (spec > 0) {
-                intensity += specular*(float)Math.pow(spec, shininess);
+                intensity += SPECULAR*(float)Math.pow(spec, SHININESS);
             }
         }
         
-        if (intensity > 1)
-            System.err.println(intensity);
+        intensity = Math.min(1, intensity);
         
         TFColor res = TFColor.multiply(input, intensity);
         res.a = input.a;

@@ -64,11 +64,20 @@ public class TransferFunctionView extends javax.swing.JPanel {
             maxBinHeigth = histogram[i] > maxBinHeigth ? histogram[i] : maxBinHeigth;
         }
         float binWidth = (float) w / (float) nrBins;
-        g2.setColor(Color.lightGray);
-        float scalingFactor = (float) h / (float) maxBinHeigth;
+        
+        float scalingFactorLog = (float) h / (float) Math.log10(maxBinHeigth);
+        g2.setColor(Color.LIGHT_GRAY);
+        for (int i = 0; i < nrBins; i++) {
+            float data = (float) Math.log10(histogram[i]);
+            g2.fill(new Rectangle2D.Double(i*binWidth, h-scalingFactorLog*data, binWidth, scalingFactorLog*data));
+        }
+        
+        float scalingFactor = (float) h / ((float) maxBinHeigth);
+        g2.setColor(Color.GRAY);
         for (int i = 0; i < nrBins; i++) {
             g2.fill(new Rectangle2D.Double(i*binWidth, h-scalingFactor*histogram[i], binWidth, scalingFactor*histogram[i]));
         }
+        
         
 
         ArrayList<TransferFunction.ControlPoint> controlPoints = tfunc.getControlPoints();
