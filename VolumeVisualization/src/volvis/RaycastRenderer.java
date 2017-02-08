@@ -265,11 +265,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         temp[1] = exitPoint[1] - entryPoint[1];
         temp[2] = exitPoint[2] - entryPoint[2];
         
-        int t0 = Math.abs((int)temp[0]);
-        int t1 = Math.abs((int)temp[1]);
-        int t2 = Math.abs((int)temp[2]);
-        
-
         float length = (float) Math.sqrt( temp[0]*temp[0] + temp[1]*temp[1] + temp[2]*temp[2] );
         //float length2 = (float) Math.sqrt( ((t0)<<1) + ((t1)<<(1)) + ((t2)<<(1)) );
         
@@ -310,22 +305,17 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         //if ( counter > 0)
         //System.out.println("counter: " + counter);
         
-        int color = floatsToColor(1, max/volMax, max/volMax, max/volMax);
-        return color;
+        return floatsToColor(1, max/volMax, max/volMax, max/volMax);
     }
    
     
    
-    void computeEntryAndExit(float[] p, float[] viewVec, float[] entryPoint, float[] exitPoint) {
+    void computeEntryAndExit(float[] p, float[] viewVec, float[] entryPoint, float[] exitPoint, float[] plane_pos, float[] plane_normal, float[] intersection) {
 
         for (int i = 0; i < 3; i++) {
             entryPoint[i] = -1;
             exitPoint[i] = -1;
         }
-
-        float[] plane_pos = new float[3];
-        float[] plane_normal = new float[3];
-        float[] intersection = new float[3];
 
         VectorMath.setVector(plane_pos, volume.getDimX(), 0, 0);
         VectorMath.setVector(plane_normal, 1, 0, 0);
@@ -376,6 +366,11 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         DragState.setDragged(false);
         
         float sampleStep = 0.2f;
+        
+        if ( !CompositePowEstimator.isInitialised() ){
+            CompositePowEstimator.init(sampleStep);
+        }
+        
         int imageCenter = image.getWidth() / 2;
         
         int splitCount = 2;
@@ -460,32 +455,62 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
      * @param sampleStep
      * @return 
      */
-    int traceRayComposite(float[] entryPoint, float[] exitPoint, float[] viewVec, float sampleStep) {
-        float[] dir = VectorMath.subtract(exitPoint, entryPoint);
-        int steps = (int) (VectorMath.length(dir) / sampleStep);
-        dir = VectorMath.normalize(dir);
-        float[] step = VectorMath.multiply(dir, sampleStep);
+    int traceRayComposite(float[] entryPoint, float[] exitPoint, float[] viewVec, float sampleStep, TFColor color, TFColor background) {
+                float temp[] = new float[3];
+        float max = Integer.MIN_VALUE;
+        float volMax = volume.getMaximum();
         
-        TFColor color = new TFColor(0,0,0,1);
-        TFColor background = new TFColor(0,0,0,1);
+        temp[0] = exitPoint[0] - entryPoint[0];
+        temp[1] = exitPoint[1] - entryPoint[1];
+        temp[2] = exitPoint[2] - entryPoint[2];
+        
+        float length = (float) Math.sqrt( temp[0]*temp[0] + temp[1]*temp[1] + temp[2]*temp[2] );
+        //float length2 = (float) Math.sqrt( ((t0)<<1) + ((t1)<<(1)) + ((t2)<<(1)) );
+        
+        float temp2 = ( 1.0f / length ) * sampleStep;
+        float steps = length / sampleStep;
+        
+        temp[0] *= temp2;
+        temp[1] *= temp2;
+        temp[2] *= temp2;
+        
+        float[] coord = new float[3];
+        
+        coord[0] = entryPoint[0];
+        coord[1] = entryPoint[1];
+        coord[2] = entryPoint[2];
+        
+        short val = 0;
+        
         float opacity = 0;
         float error = 0.01F;
+  
+        float alpha = 1.0f;
         
         for (int i = 0; i < steps; i++) {
-            float[] coord = VectorMath.add(VectorMath.multiply(step, i), entryPoint);
-            short val = volume.getVoxelInterpolate(coord);
+            coord[0] += temp[0];
+            coord[1] += temp[1];
+            coord[2] += temp[2];
+
+            val = (short) volume.getVoxelInterpolate3(coord);
             TFColor auxColor = tFunc.getColor(val);
-            float alpha = auxColor.a;
+            alpha = auxColor.a;
             // Calculate corrected alpha for when samplestep does not equal 1.
-            if (sampleStep != 1)
-                alpha = (float) (1 - Math.pow(1-auxColor.a, sampleStep));
+
+            if (sampleStep != 1.0f)
+            {
+                alpha = (float) (1 - CompositePowEstimator.getValue(1.0f-auxColor.a) );
+            }
             
+         
             color = TFColor.add(color, TFColor.multiply(auxColor, alpha * (1-opacity)));
-            opacity = opacity + (1-opacity) * alpha;
+            opacity = opacity + (1.0f-opacity) * alpha;
+            
             if (opacity > 1 - error) {
                 break;
             }
         }
+        
         color = TFColor.add(color, TFColor.multiply(background, 1 - opacity));
         
         return floatsToColor(1, color.r, color.g, color.b);

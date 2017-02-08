@@ -76,11 +76,16 @@ public class TransferFunction2DEditor extends javax.swing.JPanel {
 
         histogram = new float[xbins * ybins];
         int volumeSize = vol.getDimX() * vol.getDimY() * vol.getDimZ();
-        for (int i = 0; i < volumeSize; i++) {
-            short voxelVal = vol.getVoxel(i);
-            VoxelGradient grad = gradvol.getVoxel(i);
-            int yPos = (int) Math.floor(((ybins - 1) * grad.mag) / maxGradientMagnitude);
-            histogram[yPos * xbins + voxelVal] += 1;
+        
+        for (int x=0; x<vol.dimX; x++) {
+            for (int y=0; y<vol.dimY; y++) {
+                for (int z=0; z<vol.dimZ; z++) {
+                    short voxelVal = vol.getVoxel(x,y,z);
+                    VoxelGradient grad = gradvol.getVoxel(x + vol.dimX*(y + vol.dimY * z));
+                    int yPos = (int) Math.floor(((ybins - 1) * grad.mag) / maxGradientMagnitude);
+                    histogram[yPos * xbins + voxelVal] += 1;
+                }
+            }
         }
                 
     }

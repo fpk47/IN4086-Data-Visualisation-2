@@ -36,6 +36,10 @@ public class CustomThread extends Thread {
     private float[] delta = new float[3];
     private boolean wait = true;
     
+    private float[] temp1 = new float[3];
+    private float[] temp2 = new float[3];
+    private float[] temp3 = new float[3];
+    
     private boolean finished;
 
    public CustomThread( String name, Volume volume, RaycastRenderer raycastRenderer, float[] viewMatrix, float[] viewVec, float[] uVec, float[] vVec, int increment, float sampleStep, int imageCenter, int startX, int startY, int sizeX, int sizeY ) {
@@ -112,47 +116,58 @@ public class CustomThread extends Thread {
            
           
           
-       temp[0] = volume.getDimX() / 2.0f - viewVec[0] * imageCenter;
-       temp[1] = volume.getDimY() / 2.0f - viewVec[1] * imageCenter;
-       temp[2] = volume.getDimZ() / 2.0f - viewVec[2] * imageCenter;
+       temp[0] = volume.getDimX() / 2.0f - viewVec[0] * imageCenter + uVec[0] * (startX - imageCenter);
+       temp[1] = volume.getDimY() / 2.0f - viewVec[1] * imageCenter + uVec[1] * (startX - imageCenter);
+       temp[2] = volume.getDimZ() / 2.0f - viewVec[2] * imageCenter + uVec[2] * (startX - imageCenter);
        
        delta[0] = uVec[0] * increment;
        delta[1] = uVec[1] * increment;
        delta[2] = uVec[2] * increment;
        
        
+       float i0 = startX - imageCenter;
+       float i1 = startX + sizeX - imageCenter;
+       
+        TFColor color = new TFColor(0,0,0,1);
+        TFColor background = new TFColor(0,0,0,1);
+    
         for (float j = startY - imageCenter; j < startY + sizeY - imageCenter; j += increment) {
-             pixelCoord[0] = temp[0] + vVec[0] * (j) + uVec[0] * (startX - imageCenter);
-             pixelCoord[1] = temp[1] + vVec[1] * (j) + uVec[1] * (startX - imageCenter);
-             pixelCoord[2] = temp[2] + vVec[2] * (j) + uVec[2] * (startX - imageCenter);
+             pixelCoord[0] = temp[0] + vVec[0] * (j);
+             pixelCoord[1] = temp[1] + vVec[1] * (j);
+             pixelCoord[2] = temp[2] + vVec[2] * (j);
              
-            for (float i = startX - imageCenter; i < startX + sizeX - imageCenter; i += increment) {
+            for (float i = i0; i < i1; i += increment) {
                 // compute starting points of rays in a plane shifted backwards to a position behind the data set
                 pixelCoord[0] += delta[0];
                 pixelCoord[1] += delta[1];
                 pixelCoord[2] += delta[2]; 
                 
-                raycastRenderer.computeEntryAndExit(pixelCoord, viewVec, entryPoint, exitPoint);
+                raycastRenderer.computeEntryAndExit(pixelCoord, viewVec, entryPoint, exitPoint, temp1, temp2, temp3);
                           
                 if ((entryPoint[0] > -1.0) && (exitPoint[0] > -1.0)) {
                     //System.out.println("Entry: " + entryPoint[0] + " " + entryPoint[1] + " " + entryPoint[2]);
                     //System.out.println("Exit: " + exitPoint[0] + " " + exitPoint[1] + " " + exitPoint[2]);
                     int pixelColor = 0;
 
-                    /* set color to green if MipMode- see slicer function*/
-                   long start_time = System.currentTimeMillis();
-                   
                    if(raycastRenderer.mipMode) 
                         pixelColor = raycastRenderer.traceRayMIP(entryPoint,exitPoint,viewVec,sampleStep);
 
-                   if(raycastRenderer.compositingMode)
-                       pixelColor = raycastRenderer.traceRayComposite(entryPoint, exitPoint, viewVec, sampleStep);
+                   if(raycastRenderer.compositingMode){
+                       pixelColor = raycastRenderer.traceRayComposite(entryPoint, exitPoint, viewVec, sampleStep, color, background);
+                   }
 
         
+                   int x0 = (int) i + imageCenter - startX;
+                   int x1 = (int) i + imageCenter + increment - startX;
+                   int x2 = sizeX;
                    
-                   for ( int x = (int) i + imageCenter; ( x < (int) i + imageCenter + increment ) && ( x < startX + sizeX ); x++ ){
-                       for ( int y = (int) j + imageCenter; ( y < (int) j + imageCenter + increment ) && ( y < startY + sizeY) ; y++ ){
-                           rgb[x-startX][y-startY] = pixelColor;
+                   int y0 = (int) j + imageCenter - startY;
+                   int y1 = (int) j + imageCenter + increment - startY;
+                   int y2 = sizeY;
+                   
+                   for ( int x = x0; ( x < x1 ) && ( x < x2 ); x++ ){
+                       for ( int y = y0; ( y < y1 ) && ( y < y2) ; y++ ){
+                           rgb[x][y] = pixelColor;
                        }
                    }
                    

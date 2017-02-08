@@ -7,6 +7,8 @@ package volume;
 import java.io.File;
 import java.io.IOException;
 import util.VectorMath;
+import volvis.SqrtEstimator;
+import volvis.Pow2Estimator;
 
 /**
  *
@@ -20,7 +22,7 @@ public class Volume {
         dimX = xd;
         dimY = yd;
         dimZ = zd;
-        data = new short[(xd+1)*(yd+1)*(zd+1)];
+        data = new short[(xd+1)][(yd+1)][(zd+1)];
     }
     
     public Volume(File file) {
@@ -30,7 +32,7 @@ public class Volume {
             dimX = reader.getXDim();
             dimY = reader.getYDim();
             dimZ = reader.getZDim();
-            data = reader.getData().clone();
+            convert(reader.getData().clone());
             this.minimum = computeMinimum();
             this.maximum = computeMaximum();
             computeHistogram();
@@ -40,26 +42,42 @@ public class Volume {
         
     }
     
+    private void convert( short[] data ){
+        if ( dimX > 0 && dimY > 0 && dimZ > 0 ){
+            this.data = new short[(dimX+2)][(dimY+2)][(dimZ+2)];
+            
+            for (int x=0; x<dimX+2; x++) {
+                for (int y=0; y<dimY+2; y++) {
+                    for (int z=0; z<dimZ+2; z++) {
+                        this.data[x][y][z] = 0;
+                    }
+                }
+            }
+
+            for (int x=0; x<dimX; x++) {
+                for (int y=0; y<dimY; y++) {
+                    for (int z=0; z<dimZ; z++) {
+                        this.data[x][y][z] = data[x + dimX*(y + dimY * z)];
+                    }
+                }
+            }
+        }
+    }
+    
     public short getVoxel(int[] coord) {
-        return data[coord[0] + dimX*(coord[1] + dimY * coord[2])];
+        return data[ coord[0] ][ coord[1] ][ coord[2] ];
     }
     
     public short getVoxel(int x, int y, int z) {
-        return data[x + dimX*(y + dimY * z)];
+        return data[x][y][z];
     }
     
     public void setVoxel(int x, int y, int z, short value) {
-        data[x + dimX*(y + dimY*z)] = value;
+        data[x][y][z] = value;
         this.minimum = value < this.minimum ? value : this.minimum;
         this.maximum = value > this.maximum ? value : this.maximum;
     }
 
-    public void setVoxel(int i, short value) {
-        data[i] = value;
-        this.minimum = value < this.minimum ? value : this.minimum;
-        this.maximum = value > this.maximum ? value : this.maximum;
-    }
-    
     public short getVoxelNearestNeightbour(float[] coord) {
     /* to be implemented: get the trilinear interpolated value. 
         The current implementation gets the Nearest Neightbour */
@@ -91,6 +109,11 @@ public class Volume {
         return (float) Math.sqrt(x*x +y*y +z*z);
     }
     
+     private float temp_distance1( int x, int y, int z){
+        float temp = Pow2Estimator.getValue(x) + Pow2Estimator.getValue(y) + Pow2Estimator.getValue(z);
+        return (float) Math.sqrt(temp);
+    }
+    
      public float getVoxelInterpolate3(float[] coord) {
         //if (coord[0] < 0 || coord[0] > (dimX-1) || coord[1] < 0 || coord[1] > (dimY-1) || coord[2] < 0 || coord[2] > (dimZ-1)) {
         //    return 0;
@@ -99,50 +122,54 @@ public class Volume {
         int[] roundDown = { (int) coord[0], (int) coord[1], (int) coord[2] };
         int[] roundUp = { roundDown[0] + 1, roundDown[1] + 1, roundDown[2] + 1 };
 
-        float deltaX_0 = coord[0] - (float) roundDown[0];
-        float deltaY_0 = coord[1] - (float) roundDown[1];
-        float deltaZ_0 = coord[2] - (float) roundDown[2];
+        float deltaX_0_f = Math.abs(coord[0] - (float) roundDown[0]);
+        float deltaY_0_f = Math.abs(coord[1] - (float) roundDown[1]);
+        float deltaZ_0_f = Math.abs(coord[2] - (float) roundDown[2]);
         
-        float deltaX_1 = 1.0f - deltaX_0;
-        float deltaY_1 = 1.0f - deltaY_0;
-        float deltaZ_1 = 1.0f - deltaZ_0;
+        int deltaX_0 = (int) ( deltaX_0_f * Pow2Estimator.numberOfSamples_norm );
+        int deltaY_0 = (int) ( deltaY_0_f * Pow2Estimator.numberOfSamples_norm );
+        int deltaZ_0 = (int) ( deltaZ_0_f * Pow2Estimator.numberOfSamples_norm );
+        
+        int deltaX_1 = Pow2Estimator.numberOfSamples - deltaX_0;
+        int deltaY_1 = Pow2Estimator.numberOfSamples - deltaY_0;
+        int deltaZ_1 = Pow2Estimator.numberOfSamples - deltaZ_0;
         
         float totalDistance = 0.0f;
         float distance;
         float temp = 0.0f;
         
-        distance = temp_distance( deltaX_1, deltaY_1, deltaZ_1 );
+        distance = temp_distance1( deltaX_1, deltaY_1, deltaZ_1 );
         totalDistance += distance;
         temp += distance * getVoxel( roundUp[0], roundUp[1], roundUp[2] );
-        
-        distance = temp_distance( deltaX_1, deltaY_1, deltaZ_0 );
+  
+        distance = temp_distance1( deltaX_1, deltaY_1, deltaZ_0 );
         totalDistance += distance;
         temp += distance * getVoxel( roundUp[0], roundUp[1], roundDown[2] );
         
-        distance = temp_distance( deltaX_1, deltaY_0, deltaZ_1 );
+        distance = temp_distance1( deltaX_1, deltaY_0, deltaZ_1 );
         totalDistance += distance;
         temp += distance * getVoxel( roundUp[0], roundDown[1], roundUp[2] );
         
-        distance = temp_distance( deltaX_1, deltaY_0, deltaZ_0 );
+        distance = temp_distance1( deltaX_1, deltaY_0, deltaZ_0 );
         totalDistance += distance;
         temp += distance * getVoxel( roundUp[0], roundDown[1], roundDown[2] );
         
-        distance = temp_distance( deltaX_0, deltaY_1, deltaZ_1 );
+        distance = temp_distance1( deltaX_0, deltaY_1, deltaZ_1 );
         totalDistance += distance;
         temp += distance * getVoxel( roundDown[0], roundUp[1], roundUp[2] );
-        
-        distance = temp_distance( deltaX_0, deltaY_1, deltaZ_0 );
+
+        distance = temp_distance1( deltaX_0, deltaY_1, deltaZ_0 );
         totalDistance += distance;
         temp += distance * getVoxel( roundDown[0], roundUp[1], roundDown[2] );
         
-        distance = temp_distance( deltaX_0, deltaY_0, deltaZ_1 );
+        distance = temp_distance1( deltaX_0, deltaY_0, deltaZ_1 );
         totalDistance += distance;
         temp += distance * getVoxel( roundDown[0], roundDown[1], roundUp[2] );
-        
-        distance = temp_distance( deltaX_0, deltaY_0, deltaZ_0 );
+    
+        distance = temp_distance1( deltaX_0, deltaY_0, deltaZ_0 );
         totalDistance += distance;
         temp += distance * getVoxel( roundDown[0], roundDown[1], roundDown[2] );  
- 
+        
         return ( (float) temp / (float) totalDistance );
      }
 
@@ -287,10 +314,11 @@ public class Volume {
         return (short) result;
  
     }
-    
+    /*
     public short getVoxel(int i) {
         return data[i];
     }
+    */
     
     public int getDimX() {
         return dimX;
@@ -305,10 +333,15 @@ public class Volume {
     }
 
     private short computeMinimum() {
-        int length = dimX*dimY*dimZ;
-        short min = data[0];
-        for (int i=0; i<length; i++) {
-            min = data[i] < min ? data[i] : min;
+        short min = Short.MAX_VALUE;
+        
+        for (int x=0; x<dimX; x++) {
+            for (int y=0; y<dimY; y++) {
+                for (int z=0; z<dimZ; z++) {
+                    if ( data[x][y][z] < min )
+                        min = data[x][y][z];
+                }
+            }
         }
         return min;
     }
@@ -318,10 +351,15 @@ public class Volume {
     }
 
     private short computeMaximum() {
-        int length = dimX*dimY*dimZ;
-        short max = data[0];
-        for (int i=0; i<length; i++) {
-            max = data[i] > max ? data[i] : max;
+        short max = Short.MIN_VALUE;
+        
+        for (int x=0; x<dimX; x++) {
+            for (int y=0; y<dimY; y++) {
+                for (int z=0; z<dimZ; z++) {
+                    if ( data[x][y][z] > max )
+                        max = data[x][y][z];
+                }
+            }
         }
         return max;
     }
@@ -335,16 +373,18 @@ public class Volume {
     }
     
     private void computeHistogram() {
-        int length = dimX*dimY*dimZ;
-        
         histogram = new int[getMaximum() + 1];
-        for (int i=0; i<length; i++) {
-            histogram[data[i]]++;
+        for (int x=0; x<dimX; x++) {
+            for (int y=0; y<dimY; y++) {
+                for (int z=0; z<dimZ; z++) {
+                    histogram[data[x][y][z]]++;
+                }
+            }
         }
     }
     
-    private int dimX, dimY, dimZ;
+    public int dimX, dimY, dimZ;
     private short minimum, maximum;
-    private short[] data;
+    private short[][][] data;
     private int[] histogram;
 }
