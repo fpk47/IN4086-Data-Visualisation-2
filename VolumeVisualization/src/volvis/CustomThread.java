@@ -1,5 +1,7 @@
 package volvis;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import volume.Volume;
 
 /**
@@ -7,32 +9,36 @@ import volume.Volume;
  * @author Frits
  */
 public class CustomThread extends Thread {
-    private final Volume volume;
+    private Volume volume;
     private RaycastRenderer raycastRenderer;
             
-    private final float[] viewMatrix;
-    private final float[] viewVec;
-    private final float[] uVec;
-    private final float[] vVec;
+    private float[] viewMatrix;
+    private float[] viewVec;
+    private float[] uVec;
+    private float[] vVec;
     
     private float[] pixelCoord = new float[3];
     private float[] entryPoint = new float[3];
     private float[] exitPoint = new float[3];
 
-    private final int increment;
-    private final float sampleStep;
+    private int increment;
+    private float sampleStep;
     
-    private final int imageCenter;
-    public final int startX;
-    public final int startY;
-    public final int sizeX;
-    public final int sizeY;
+    private int imageCenter;
+    public int startX;
+    public int startY;
+    public int sizeX;
+    public int sizeY;
 
     private int[][] rgb;
     
+    private float[] temp = new float[3];
+    private float[] delta = new float[3];
+    private boolean wait = true;
+    
     private boolean finished;
 
-   CustomThread( String name, Volume volume, RaycastRenderer raycastRenderer, float[] viewMatrix, float[] viewVec, float[] uVec, float[] vVec, int increment, float sampleStep, int imageCenter, int startX, int startY, int sizeX, int sizeY ) {
+   public CustomThread( String name, Volume volume, RaycastRenderer raycastRenderer, float[] viewMatrix, float[] viewVec, float[] uVec, float[] vVec, int increment, float sampleStep, int imageCenter, int startX, int startY, int sizeX, int sizeY ) {
        super(name);
        this.volume = volume;
        this.raycastRenderer = raycastRenderer;
@@ -52,8 +58,37 @@ public class CustomThread extends Thread {
        this.sizeY = sizeY;
        
        rgb = new int[sizeX][sizeY];
+       this.wait = true;
        
        finished = false;   
+   }
+   
+   public void setVariables( Volume volume, RaycastRenderer raycastRenderer, float[] viewMatrix, float[] viewVec, float[] uVec, float[] vVec, int increment, float sampleStep, int imageCenter, int startX, int startY, int sizeX, int sizeY ){
+       this.volume = volume;
+       this.raycastRenderer = raycastRenderer;
+       
+       this.viewMatrix = viewMatrix;
+       this.viewVec = viewVec;
+       this.uVec = uVec;
+       this.vVec = vVec;
+       
+       this.increment = increment;
+       this.sampleStep = sampleStep;
+       
+       this.imageCenter = imageCenter;
+       this.startX = startX;
+       this.startY = startY;
+       this.sizeX = sizeX;
+       this.sizeY = sizeY;
+       
+       rgb = new int[sizeX][sizeY];
+       this.wait = true;
+       
+       finished = false;   
+   }
+   
+   public void go(){
+       wait = false;
    }
    
    public boolean isRunning(){
@@ -65,20 +100,37 @@ public class CustomThread extends Thread {
     }
    
    public void run() {
-       long totalTime = 0;
+       while ( true ){
+           while ( wait )
+           {
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(CustomThread.class.getName()).log(Level.SEVERE, null, ex);
+                }
+           }
+           
+          
+          
+       temp[0] = volume.getDimX() / 2.0f - viewVec[0] * imageCenter;
+       temp[1] = volume.getDimY() / 2.0f - viewVec[1] * imageCenter;
+       temp[2] = volume.getDimZ() / 2.0f - viewVec[2] * imageCenter;
        
-        for (int j = startY; j < startY + sizeX; j += increment) {
-            for (int i = startX; i < startX + sizeY; i += increment) {
+       delta[0] = uVec[0] * increment;
+       delta[1] = uVec[1] * increment;
+       delta[2] = uVec[2] * increment;
+       
+       
+        for (float j = startY - imageCenter; j < startY + sizeY - imageCenter; j += increment) {
+             pixelCoord[0] = temp[0] + vVec[0] * (j) + uVec[0] * (startX - imageCenter);
+             pixelCoord[1] = temp[1] + vVec[1] * (j) + uVec[1] * (startX - imageCenter);
+             pixelCoord[2] = temp[2] + vVec[2] * (j) + uVec[2] * (startX - imageCenter);
+             
+            for (float i = startX - imageCenter; i < startX + sizeX - imageCenter; i += increment) {
                 // compute starting points of rays in a plane shifted backwards to a position behind the data set
-                pixelCoord[0] = uVec[0] * (i - imageCenter) + vVec[0] * (j - imageCenter) - viewVec[0] * imageCenter
-                        + volume.getDimX() / 2.0f;
-                pixelCoord[1] = uVec[1] * (i - imageCenter) + vVec[1] * (j - imageCenter) - viewVec[1] * imageCenter
-                        + volume.getDimY() / 2.0f;
-                pixelCoord[2] = uVec[2] * (i - imageCenter) + vVec[2] * (j - imageCenter) - viewVec[2] * imageCenter
-                        + volume.getDimZ() / 2.0f;
-        
-
-            
+                pixelCoord[0] += delta[0];
+                pixelCoord[1] += delta[1];
+                pixelCoord[2] += delta[2]; 
                 
                 raycastRenderer.computeEntryAndExit(pixelCoord, viewVec, entryPoint, exitPoint);
                           
@@ -98,21 +150,19 @@ public class CustomThread extends Thread {
 
         
                    
-                   for ( int x = i; ( x < i + increment ) && ( x < startX + sizeX ); x++ ){
-                       for ( int y = j; ( y < j + increment ) && ( y < startY + sizeY) ; y++ ){
+                   for ( int x = (int) i + imageCenter; ( x < (int) i + imageCenter + increment ) && ( x < startX + sizeX ); x++ ){
+                       for ( int y = (int) j + imageCenter; ( y < (int) j + imageCenter + increment ) && ( y < startY + sizeY) ; y++ ){
                            rgb[x-startX][y-startY] = pixelColor;
                        }
                    }
                    
-                                  long end_time = System.currentTimeMillis();
-                totalTime += end_time-start_time;
-
                 }
             }
         }
-        
-        System.out.println(totalTime);
+
         finished = true;
-   }
+         wait = true;
+        }
+        }
    }
 

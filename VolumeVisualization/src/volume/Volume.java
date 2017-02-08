@@ -17,10 +17,10 @@ import util.VectorMath;
 public class Volume {
     
     public Volume(int xd, int yd, int zd) {
-        data = new short[xd*yd*zd];
         dimX = xd;
         dimY = yd;
         dimZ = zd;
+        data = new short[(xd+1)*(yd+1)*(zd+1)];
     }
     
     public Volume(File file) {
@@ -79,15 +79,6 @@ public class Volume {
     }
     
     /**
-     * Round a float value up ( 7.4 --> 8, 7.7 --> 8)
-     * @param value
-     * @return up-rounded value (int)
-     */
-    private static int roundUp( float value ){
-        return (int) (value + 0.5);
-    } 
-    
-    /**
      * Round a float value up ( 7.4 --> 7, 7.7 --> 7)
      * @param value
      * @return down-rounded value (int)
@@ -95,31 +86,160 @@ public class Volume {
     private static int roundDown( float value ){
         return (int) value;
     } 
+
+    private float temp_distance( float x, float y, float z){
+        return (float) Math.sqrt(x*x +y*y +z*z);
+    }
     
+     public float getVoxelInterpolate3(float[] coord) {
+        //if (coord[0] < 0 || coord[0] > (dimX-1) || coord[1] < 0 || coord[1] > (dimY-1) || coord[2] < 0 || coord[2] > (dimZ-1)) {
+        //    return 0;
+        //}
+        
+        int[] roundDown = { (int) coord[0], (int) coord[1], (int) coord[2] };
+        int[] roundUp = { roundDown[0] + 1, roundDown[1] + 1, roundDown[2] + 1 };
+
+        float deltaX_0 = coord[0] - (float) roundDown[0];
+        float deltaY_0 = coord[1] - (float) roundDown[1];
+        float deltaZ_0 = coord[2] - (float) roundDown[2];
+        
+        float deltaX_1 = 1.0f - deltaX_0;
+        float deltaY_1 = 1.0f - deltaY_0;
+        float deltaZ_1 = 1.0f - deltaZ_0;
+        
+        float totalDistance = 0.0f;
+        float distance;
+        float temp = 0.0f;
+        
+        distance = temp_distance( deltaX_1, deltaY_1, deltaZ_1 );
+        totalDistance += distance;
+        temp += distance * getVoxel( roundUp[0], roundUp[1], roundUp[2] );
+        
+        distance = temp_distance( deltaX_1, deltaY_1, deltaZ_0 );
+        totalDistance += distance;
+        temp += distance * getVoxel( roundUp[0], roundUp[1], roundDown[2] );
+        
+        distance = temp_distance( deltaX_1, deltaY_0, deltaZ_1 );
+        totalDistance += distance;
+        temp += distance * getVoxel( roundUp[0], roundDown[1], roundUp[2] );
+        
+        distance = temp_distance( deltaX_1, deltaY_0, deltaZ_0 );
+        totalDistance += distance;
+        temp += distance * getVoxel( roundUp[0], roundDown[1], roundDown[2] );
+        
+        distance = temp_distance( deltaX_0, deltaY_1, deltaZ_1 );
+        totalDistance += distance;
+        temp += distance * getVoxel( roundDown[0], roundUp[1], roundUp[2] );
+        
+        distance = temp_distance( deltaX_0, deltaY_1, deltaZ_0 );
+        totalDistance += distance;
+        temp += distance * getVoxel( roundDown[0], roundUp[1], roundDown[2] );
+        
+        distance = temp_distance( deltaX_0, deltaY_0, deltaZ_1 );
+        totalDistance += distance;
+        temp += distance * getVoxel( roundDown[0], roundDown[1], roundUp[2] );
+        
+        distance = temp_distance( deltaX_0, deltaY_0, deltaZ_0 );
+        totalDistance += distance;
+        temp += distance * getVoxel( roundDown[0], roundDown[1], roundDown[2] );  
+ 
+        return ( (float) temp / (float) totalDistance );
+     }
+
+     public float getVoxelInterpolate2(float[] coord) {
+        if (coord[0] < 0 || coord[0] > (dimX-1) || coord[1] < 0 || coord[1] > (dimY-1) || coord[2] < 0 || coord[2] > (dimZ-1)) {
+            return 0;
+        }
+        
+        int[] roundDown = { (int) coord[0], (int) coord[1], (int) coord[2] };
+        int[] roundUp = { roundDown[0] + 1, roundDown[1] + 1, roundDown[2] + 1 };
+
+        float deltaX_0 = coord[0] - (float) roundDown[0];
+        float deltaY_0 = coord[1] - (float) roundDown[1];
+        float deltaZ_0 = coord[2] - (float) roundDown[2];
+        
+        float deltaX_1 = 1.0f - deltaX_0;
+        float deltaY_1 = 1.0f - deltaY_0;
+        float deltaZ_1 = 1.0f - deltaZ_0;
+        
+        float totalDistance = 0.0f;
+        float distances[] = new float[8];
+        float colorValues[] = new float[8];
+        
+        distances[0] = temp_distance( deltaX_1, deltaY_1, deltaZ_1 );
+        totalDistance += distances[0];
+        colorValues[0] = getVoxel( roundUp[0], roundUp[1], roundUp[2] );
+        
+        distances[1] = temp_distance( deltaX_1, deltaY_1, deltaZ_0 );
+        totalDistance += distances[1];
+        colorValues[1] = getVoxel( roundUp[0], roundUp[1], roundDown[2] );
+        
+        distances[2] = temp_distance( deltaX_1, deltaY_0, deltaZ_1 );
+        totalDistance += distances[2];
+        colorValues[2] = getVoxel( roundUp[0], roundDown[1], roundUp[2] );
+        
+        distances[3] = temp_distance( deltaX_1, deltaY_0, deltaZ_0 );
+        totalDistance += distances[3];
+        colorValues[3] = getVoxel( roundUp[0], roundDown[1], roundDown[2] );
+        
+        distances[4] = temp_distance( deltaX_0, deltaY_1, deltaZ_1 );
+        totalDistance += distances[4];
+        colorValues[4] = getVoxel( roundDown[0], roundUp[1], roundUp[2] );
+        
+        distances[5] = temp_distance( deltaX_0, deltaY_1, deltaZ_0 );
+        totalDistance += distances[5];
+        colorValues[5] = getVoxel( roundDown[0], roundUp[1], roundDown[2] );
+        
+        distances[6] = temp_distance( deltaX_0, deltaY_0, deltaZ_1 );
+        totalDistance += distances[6];
+        colorValues[6] = getVoxel( roundDown[0], roundDown[1], roundUp[2] );
+        
+        distances[7] = temp_distance( deltaX_0, deltaY_0, deltaZ_0 );
+        totalDistance += distances[7];
+        colorValues[7] = getVoxel( roundDown[0], roundDown[1], roundDown[2] );  
+        
+        float result = 0;
+
+        for ( int i = 0; i < 8; i++ ){
+            result += ( distances[i] / totalDistance ) * colorValues[i];
+        }
+        
+        return result;
+     }
+     
     public short getVoxelInterpolate(float[] coord) {
+       
         if (coord[0] < 0 || coord[0] > (dimX-1) || coord[1] < 0 || coord[1] > (dimY-1)
                 || coord[2] < 0 || coord[2] > (dimZ-1)) {
             return 0;
         }
-        /* notice that in this framework we assume that the distance between neighbouring voxels is 1 in all directions*/
-        
+
         float totalDistance = 0.0f;
         float distances[] = new float[8];
         float localCoord[] = new float[3];
         float colorValues[] = new float[8];
         
-        int[] roundDown = { roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] )};
-        int[] roundUp = { roundUp( coord[0] ), roundUp( coord[1] ), roundUp( coord[2] )};
+        int[] roundDown = { (int) coord[0], (int) coord[1], (int) coord[2] };
+        int[] roundUp = { roundDown[0] + 1, roundDown[1] + 1, roundDown[2] + 1 };
+
+        if ( roundUp[0] != roundDown[0] + 1 ){
+           System.out.println( roundUp[0] + " " + (roundDown[0] + 1) + " " + coord[0] + " " + roundDown[0] );
+        }
+
        
         VectorMath.setVector( localCoord, roundUp[0], roundUp[1], roundUp[2] );
         distances[0] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[0];
         colorValues[0] = getVoxel( roundUp[0], roundUp[1], roundUp[2] );
         
+    
+        
         VectorMath.setVector( localCoord, roundUp[0], roundUp[1], roundDown[2] );
         distances[1] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[1];
         colorValues[1] = getVoxel( roundUp[0], roundUp[1], roundDown[2] );
+        
+                  
         
         VectorMath.setVector( localCoord, roundUp[0], roundDown[1], roundUp[2] );
         distances[2] = VectorMath.distance( coord, localCoord );
@@ -150,10 +270,11 @@ public class Volume {
         distances[7] = VectorMath.distance( coord, localCoord );
         totalDistance += distances[7];
         colorValues[7] = getVoxel( roundDown[0], roundDown[1], roundDown[2] );
+
+         //System.out.println("1: " + totalDistance +  " " + (coord[2] - localCoord[2] ) + " " + coord[2] + " " + localCoord[2] );
         
-        int result = 0;
         
-        
+        float result = 0;
         
         for ( int i = 0; i < 8; i++ ){
             result += ( distances[i] / totalDistance ) * colorValues[i];
@@ -164,6 +285,7 @@ public class Volume {
         }
         
         return (short) result;
+ 
     }
     
     public short getVoxel(int i) {
@@ -183,8 +305,9 @@ public class Volume {
     }
 
     private short computeMinimum() {
+        int length = dimX*dimY*dimZ;
         short min = data[0];
-        for (int i=0; i<data.length; i++) {
+        for (int i=0; i<length; i++) {
             min = data[i] < min ? data[i] : min;
         }
         return min;
@@ -195,8 +318,9 @@ public class Volume {
     }
 
     private short computeMaximum() {
+        int length = dimX*dimY*dimZ;
         short max = data[0];
-        for (int i=0; i<data.length; i++) {
+        for (int i=0; i<length; i++) {
             max = data[i] > max ? data[i] : max;
         }
         return max;
@@ -211,8 +335,10 @@ public class Volume {
     }
     
     private void computeHistogram() {
+        int length = dimX*dimY*dimZ;
+        
         histogram = new int[getMaximum() + 1];
-        for (int i=0; i<data.length; i++) {
+        for (int i=0; i<length; i++) {
             histogram[data[i]]++;
         }
     }

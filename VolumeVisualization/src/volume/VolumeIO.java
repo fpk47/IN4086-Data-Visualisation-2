@@ -51,7 +51,12 @@ public class VolumeIO {
                 //System.out.println("read " + byteCount + " bytes");
             }
             
-            data = new short[x_dim * y_dim * z_dim];
+            data = new short[(x_dim+1) * (y_dim+1) * (z_dim+1)];
+            
+            for ( int i = 0; i < ((x_dim+1)*(y_dim+1)*(z_dim+1)); i++ ){
+                data[i] = 0;
+            }
+            
             if (data_type == 1) { //bytes
                 for (int i=0; i<byteCount; i++) {
                     data[i] = (short) (d[i] & 0xFF);

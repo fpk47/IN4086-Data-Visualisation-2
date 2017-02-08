@@ -71,8 +71,7 @@ public class Visualization implements GLEventListener, TFChangeListener {
     }
 
    @Override
-    public void display(GLAutoDrawable drawable) {
-
+    public void display(GLAutoDrawable drawable) { 
         // get the OpenGL rendering context
         GL2 gl = drawable.getGL().getGL2();
 

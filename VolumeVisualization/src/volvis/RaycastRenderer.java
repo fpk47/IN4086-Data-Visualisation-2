@@ -9,6 +9,7 @@ import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.awt.AWTTextureIO;
 import gui.RaycastRendererPanel;
+import java.util.Arrays;
 import gui.TransferFunction2DEditor;
 import gui.TransferFunctionEditor;
 import java.awt.image.BufferedImage;
@@ -42,6 +43,9 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     public boolean compositingMode = false;
     public boolean tf2dMode = false;
     public boolean shadingMode = false;
+    
+    private ArrayList<CustomThread> threads = new ArrayList<CustomThread>();
+    private boolean firstTime = true;
     
     public RaycastRenderer() {
         panel = new RaycastRendererPanel(this);
@@ -241,22 +245,71 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         }
     }
     
-
       int traceRayMIP(float[] entryPoint, float[] exitPoint, float[] viewVec, float sampleStep) {
+        /*
         float[] dir = VectorMath.subtract(exitPoint, entryPoint);
         int steps = (int) (VectorMath.length(dir) / sampleStep);
         dir = VectorMath.normalize(dir);
         float[] step = VectorMath.multiply(dir, sampleStep);
         float volMax = volume.getMaximum();
-        int max = Integer.MIN_VALUE;
+        
+        int counter = 0;
+        */
+        ////
+        
+        float temp[] = new float[3];
+        float max = Integer.MIN_VALUE;
+        float volMax = volume.getMaximum();
+        
+        temp[0] = exitPoint[0] - entryPoint[0];
+        temp[1] = exitPoint[1] - entryPoint[1];
+        temp[2] = exitPoint[2] - entryPoint[2];
+        
+        int t0 = Math.abs((int)temp[0]);
+        int t1 = Math.abs((int)temp[1]);
+        int t2 = Math.abs((int)temp[2]);
+        
+
+        float length = (float) Math.sqrt( temp[0]*temp[0] + temp[1]*temp[1] + temp[2]*temp[2] );
+        //float length2 = (float) Math.sqrt( ((t0)<<1) + ((t1)<<(1)) + ((t2)<<(1)) );
+        
+        float temp2 = ( 1.0f / length ) * sampleStep;
+        float steps = length / sampleStep;
+        
+        temp[0] *= temp2;
+        temp[1] *= temp2;
+        temp[2] *= temp2;
+        
+        float[] coord = new float[3];
+        
+        coord[0] = entryPoint[0];
+        coord[1] = entryPoint[1];
+        coord[2] = entryPoint[2];
+        float val;
+        
         for (int i = 0; i < steps; i++) {
-            float[] coord = VectorMath.add(VectorMath.multiply(step, i), entryPoint);
-            short val = volume.getVoxelInterpolate(coord);
-            max = Math.max(max, val);
-            if (max == volMax) {
+            coord[0] += temp[0];
+            coord[1] += temp[1];
+            coord[2] += temp[2];
+            
+            val = volume.getVoxelInterpolate3(coord);
+            /*float val2 = volume.getVoxelInterpolate3(coord);
+            
+            if ( Math.abs((short)val - (short)val2) > 0 ){
+                counter++;
+                System.out.println("error: " + val + " " + val2 );
+            }*/
+            
+            if ( val > max )
+                max = val;
+   
+            if (max == volMax ) {
                 break;
             }
         }
+        //if ( counter > 0)
+        //System.out.println("counter: " + counter);
+        
         int color = floatsToColor(1, max/volMax, max/volMax, max/volMax);
         return color;
     }
@@ -299,7 +352,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         intersectFace(plane_pos, plane_normal, p, viewVec, intersection, entryPoint, exitPoint);
     }
 
-    void raycast(float[] viewMatrix) {        
+    void raycast(float[] viewMatrix) {      
         /* To be partially implemented:
             This function traces the rays through the volume. Have a look and check that you understand how it works.
             You need to introduce here the different modalities MIP/Compositing/TF2/ etc...*/
@@ -317,15 +370,13 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         int increment = 1;
         
         if ( DragState.isDragged() ){
-            increment = 10;
+            increment = 5;
         } 
         
         DragState.setDragged(false);
         
         float sampleStep = 0.2f;
         int imageCenter = image.getWidth() / 2;
-
-        ArrayList<CustomThread> threads = new ArrayList<CustomThread>();
         
         int splitCount = 2;
         int restX = totalSizeX % splitCount;
@@ -343,13 +394,30 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
                 
                 if ( x == splitCount - 1 )  tempSizeX += restX;
                 if ( y == splitCount - 1 )  tempSizeY += restY;
-   
-                CustomThread customThread = new CustomThread(x + " " + y, volume, this, viewMatrix, viewVec, uVec, vVec, increment, sampleStep, imageCenter, currentX, currentY, tempSizeX, tempSizeY );
-                threads.add( customThread );
-                customThread.start();
+                
+                if ( firstTime ){
+                    CustomThread customThread = new CustomThread(x + " " + y, volume, this, viewMatrix, viewVec, uVec, vVec, increment, sampleStep, imageCenter, currentX, currentY, tempSizeX, tempSizeY );
+                    threads.add( customThread );
+                } else{
+                    threads.get(x + y * splitCount ).setVariables(volume, this, viewMatrix, viewVec, uVec, vVec, increment, sampleStep, imageCenter, currentX, currentY, tempSizeX, tempSizeY );
+                }
             }
         }
 
+        
+        
+   
+        for ( CustomThread thread : threads ){
+            if ( firstTime ){
+                thread.start();
+                thread.go();
+            } else{
+                thread.go();
+            }
+        } 
+        
+             firstTime = false;
+        
           
         boolean done = false;
         while( !done ){
