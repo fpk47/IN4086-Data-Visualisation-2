@@ -363,7 +363,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         VectorMath.setVector(viewVec, viewMatrix[2], viewMatrix[6], viewMatrix[10]);
         VectorMath.setVector(uVec, viewMatrix[0], viewMatrix[4], viewMatrix[8]);
         VectorMath.setVector(vVec, viewMatrix[1], viewMatrix[5], viewMatrix[9]);
-
+System.out.println(viewVec[0] + ", " +viewVec[1] + ", " +viewVec[2]);
         int totalSizeX = image.getWidth();
         int totalSizeY = image.getHeight();
         
@@ -474,6 +474,9 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             else {
                 auxColor = transfer2dCalc(val, gradients.getGradient(coord));
             }
+            if (shadingMode) {
+                auxColor = phongShading(auxColor, viewVec, gradients.getGradient(coord));
+            }
             
             float alpha = auxColor.a;
             // Calculate corrected alpha for when samplestep does not equal 1.
@@ -508,6 +511,43 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         }
         
         return new TFColor(color.r, color.g, color.b, color.a*alpha);
+    }
+    
+    private static float ambient = 0.1f;
+    private static float diffuse = 0.7f;
+    private static float specular = 0.2f;
+    private static float shininess = 1f;
+    /**
+     * 
+     * @param input
+     * @param viewVec
+     * @return 
+     */
+    private TFColor phongShading(TFColor input, float[] viewVec, VoxelGradient gradient) {
+        float[] normal = {gradient.x / gradient.mag, gradient.y / gradient.mag, gradient.z / gradient.mag};
+        
+        // We position our lightsource as a sun, always positioned behind the viewer
+        float[] dirToLight = VectorMath.normalize(viewVec);
+        dirToLight = VectorMath.multiply(dirToLight, -1);
+        float diff = VectorMath.dotproduct(normal, dirToLight);
+        
+        float spec = VectorMath.dotproduct(dirToLight, normal);
+        
+        float intensity = 0.0f;
+        intensity += ambient;
+        if (diff > 0) {
+            intensity += diffuse*diff;
+            if (spec > 0) {
+                intensity += specular*(float)Math.pow(spec, shininess);
+            }
+        }
+        
+        if (intensity > 1)
+            System.err.println(intensity);
+        
+        TFColor res = TFColor.multiply(input, intensity);
+        res.a = input.a;
+        return res;
     }
 
     void slicer(float[] viewMatrix) {
