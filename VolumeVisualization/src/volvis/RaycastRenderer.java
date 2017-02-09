@@ -46,6 +46,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     
     private ArrayList<CustomThread> threads = new ArrayList<CustomThread>();
     private boolean firstTime = true;
+    private TFColor zeroColor = new TFColor(0, 0, 0, 0);
     
     public RaycastRenderer() {
         panel = new RaycastRendererPanel(this);
@@ -363,7 +364,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         VectorMath.setVector(viewVec, viewMatrix[2], viewMatrix[6], viewMatrix[10]);
         VectorMath.setVector(uVec, viewMatrix[0], viewMatrix[4], viewMatrix[8]);
         VectorMath.setVector(vVec, viewMatrix[1], viewMatrix[5], viewMatrix[9]);
-System.out.println(viewVec[0] + ", " +viewVec[1] + ", " +viewVec[2]);
+
         int totalSizeX = image.getWidth();
         int totalSizeY = image.getHeight();
         
@@ -479,6 +480,12 @@ System.out.println(viewVec[0] + ", " +viewVec[1] + ", " +viewVec[2]);
             }
             
             float alpha = auxColor.a;
+            
+            if (alpha == 0) {
+                // Absolutly transparent, has no influence on the result, don't do unnecessary math
+                continue;
+            }
+            
             // Calculate corrected alpha for when samplestep does not equal 1.
             if (sampleStep != 1)
                 alpha = (float) (1 - Math.pow(1-auxColor.a, sampleStep));
@@ -506,11 +513,18 @@ System.out.println(viewVec[0] + ", " +viewVec[1] + ", " +viewVec[2]);
         
         float rGradient = r*gradient.mag;
         
-        if (gradient.mag>0 && value - rGradient <= f  && value + rGradient >= f) {
+        if (gradient.mag>0 && value - rGradient <= f  && value + rGradient >= f
+                && gradient.mag >= tfEditor2D.triangleWidget.minMagnitude
+                && gradient.mag <= tfEditor2D.triangleWidget.maxMagnitude) {
             alpha = 1.0f - (float) Math.abs((f - value) / rGradient);
         }
         
-        return new TFColor(color.r, color.g, color.b, color.a*alpha);
+        if (alpha == 0) {
+            return this.zeroColor;
+        }
+        else {
+            return new TFColor(color.r, color.g, color.b, color.a*alpha);
+        }
     }
     
     private static final float AMBIENT = 0.3f;

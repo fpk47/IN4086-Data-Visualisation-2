@@ -65,10 +65,10 @@ public class TransferFunctionView extends javax.swing.JPanel {
         }
         float binWidth = (float) w / (float) nrBins;
         
-        float scalingFactorLog = (float) h / (float) Math.log10(maxBinHeigth);
+        float scalingFactorLog = (float) h / (float) Math.log(maxBinHeigth);
         g2.setColor(Color.LIGHT_GRAY);
         for (int i = 0; i < nrBins; i++) {
-            float data = (float) Math.log10(histogram[i]);
+            float data = (float) Math.log(histogram[i]);
             g2.fill(new Rectangle2D.Double(i*binWidth, h-scalingFactorLog*data, binWidth, scalingFactorLog*data));
         }
         
