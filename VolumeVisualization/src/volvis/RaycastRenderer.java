@@ -487,12 +487,11 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
 
             val = (short) volume.getVoxelInterpolate3(coord);
             TFColor auxColor = tFunc.getColor(val);
-            alpha = auxColor.a;
 
             if (compositingMode) {
                 auxColor = tFunc.getColor(val);
             }
-            else {
+            else if (tf2dMode) {
                 auxColor = transfer2dCalc(val, gradients.getGradient(coord));
             }
             if (shadingMode) {
