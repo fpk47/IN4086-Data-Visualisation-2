@@ -20,7 +20,7 @@ public class CompositePowEstimator {
         float current = 0.0f;
         
         for ( int i = 0; i < numberOfSamples; i++ ){
-            result[i] = (float) Math.pow(current, sampleStep);
+            result[i] = (float) Math.pow(1.0f - current, sampleStep);
             current += delta;
         }
         

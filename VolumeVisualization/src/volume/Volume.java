@@ -122,9 +122,14 @@ public class Volume {
         int[] roundDown = { (int) coord[0], (int) coord[1], (int) coord[2] };
         int[] roundUp = { roundDown[0] + 1, roundDown[1] + 1, roundDown[2] + 1 };
 
-        float deltaX_0_f = Math.abs(coord[0] - (float) roundDown[0]);
-        float deltaY_0_f = Math.abs(coord[1] - (float) roundDown[1]);
-        float deltaZ_0_f = Math.abs(coord[2] - (float) roundDown[2]);
+        float deltaX_0_f = coord[0] - (float) roundDown[0];
+        float deltaY_0_f = coord[1] - (float) roundDown[1];
+        float deltaZ_0_f = coord[2] - (float) roundDown[2];
+        
+        if ( deltaX_0_f < 0 ) deltaX_0_f *= -1.0f;
+        if ( deltaY_0_f < 0 ) deltaY_0_f *= -1.0f;
+        if ( deltaZ_0_f < 0 ) deltaZ_0_f *= -1.0f;
+        
         
         int deltaX_0 = (int) ( deltaX_0_f * Pow2Estimator.numberOfSamples_norm );
         int deltaY_0 = (int) ( deltaY_0_f * Pow2Estimator.numberOfSamples_norm );

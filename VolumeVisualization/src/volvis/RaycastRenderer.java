@@ -502,7 +502,7 @@ System.out.println(viewVec[0] + ", " +viewVec[1] + ", " +viewVec[2]);
 
             if (sampleStep != 1.0f)
             {
-                alpha = (float) (1 - CompositePowEstimator.getValue(1.0f-auxColor.a) );
+                alpha = (float) (1 - CompositePowEstimator.getValue(auxColor.a) ); // CompositePowEstimator calculated 1-auxColor.a
             }
             
          
