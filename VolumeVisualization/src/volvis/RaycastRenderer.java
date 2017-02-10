@@ -543,7 +543,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             alpha = 1.0f - (float) Math.abs((f - value) / rGradient);
         }
         
-        if (alpha == 0) {
+        if (alpha <= 0) {
             return this.zeroColor;
         }
         else {
