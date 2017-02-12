@@ -602,7 +602,8 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     }
 
     void slicer(float[] viewMatrix) {
-
+        DragState.setDragged(false);
+        
         // clear image
         for (int j = 0; j < image.getHeight(); j++) {
             for (int i = 0; i < image.getWidth(); i++) {
