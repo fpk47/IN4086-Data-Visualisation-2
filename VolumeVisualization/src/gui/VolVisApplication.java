@@ -10,7 +10,7 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import volume.Volume;
-import volvis.SqrtEstimator;
+import volvis.Pow2Estimator;
 import volvis.RaycastRenderer;
 import volvis.Visualization;
 
@@ -134,8 +134,9 @@ public class VolVisApplication extends javax.swing.JFrame {
 
     private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
         // TODO add your handling code here:
-        if ( !SqrtEstimator.isInitialised() ){
-            SqrtEstimator.init();
+
+        if ( !Pow2Estimator.isInitialised() ){
+            Pow2Estimator.init();
         }
         
         JFileChooser fc = new JFileChooser();

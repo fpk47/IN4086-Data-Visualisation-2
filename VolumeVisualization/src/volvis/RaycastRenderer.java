@@ -289,6 +289,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             coord[2] += temp[2];
             
             val = volume.getVoxelInterpolate3(coord);
+
             /*float val2 = volume.getVoxelInterpolate3(coord);
             
             if ( Math.abs((short)val - (short)val2) > 0 ){
@@ -486,7 +487,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             coord[2] += temp[2];
 
             val = (short) volume.getVoxelInterpolate3(coord);
-            TFColor auxColor = tFunc.getColor(val);
+            TFColor auxColor = null;
 
             if (compositingMode) {
                 auxColor = tFunc.getColor(val);
@@ -494,16 +495,19 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             else if (tf2dMode) {
                 auxColor = transfer2dCalc(val, gradients.getGradient(coord));
             }
-            if (shadingMode) {
-                auxColor = phongShading(auxColor, viewVec, gradients.getGradient(coord));
-            }
             
-            alpha = auxColor.a;
+                        alpha = auxColor.a;
             
             if (alpha == 0) {
                 // Absolutly transparent, has no influence on the result, don't do unnecessary math
                 continue;
             }
+            
+            if (shadingMode) {
+                auxColor = phongShading(auxColor, viewVec, gradients.getGradient(coord));
+            }
+            
+
             // Calculate corrected alpha for when samplestep does not equal 1.
 
             if (sampleStep != 1.0f)
@@ -525,22 +529,21 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         return floatsToColor(1, color.r, color.g, color.b);
     }
     
-    private TFColor transfer2dCalc(short value, VoxelGradient gradient) {
+    private TFColor transfer2dCalc(float value, VoxelGradient gradient) {
         float f = tfEditor2D.triangleWidget.baseIntensity;
         float r = tfEditor2D.triangleWidget.radius;
         TFColor color = tfEditor2D.triangleWidget.color;
-        
-        float alpha = 0;
-        if (gradient.mag == 0 && value == f) {
-            alpha = 1;
-        }
-        
         float rGradient = r*gradient.mag;
         
-        if (gradient.mag>0 && value - rGradient <= f  && value + rGradient >= f
+        float alpha = 0;
+        if (gradient.mag == 0) {
+            if ( value == f ){
+                alpha = 1;
+            }
+        } else if ( value - rGradient <= f  && value + rGradient >= f
                 && gradient.mag >= tfEditor2D.triangleWidget.minMagnitude
-                && gradient.mag <= tfEditor2D.triangleWidget.maxMagnitude) {
-            alpha = 1.0f - (float) Math.abs((f - value) / rGradient);
+                && gradient.mag <= tfEditor2D.triangleWidget.maxMagnitude ){
+             alpha = 1.0f - (float) Math.abs((f - value) / rGradient);
         }
         
         if (alpha == 0) {

@@ -7,7 +7,6 @@ package volume;
 import java.io.File;
 import java.io.IOException;
 import util.VectorMath;
-import volvis.SqrtEstimator;
 import volvis.Pow2Estimator;
 
 /**
@@ -109,11 +108,13 @@ public class Volume {
         return (float) Math.sqrt(x*x +y*y +z*z);
     }
     
-     private float temp_distance1( int x, int y, int z){
+    // Faster than temp_distance
+    private float temp_distance1( int x, int y, int z){
         float temp = Pow2Estimator.getValue(x) + Pow2Estimator.getValue(y) + Pow2Estimator.getValue(z);
         return (float) Math.sqrt(temp);
     }
     
+     // Faster than getVoxelInterpolate2
      public float getVoxelInterpolate3(float[] coord) {
         //if (coord[0] < 0 || coord[0] > (dimX-1) || coord[1] < 0 || coord[1] > (dimY-1) || coord[2] < 0 || coord[2] > (dimZ-1)) {
         //    return 0;
@@ -178,6 +179,7 @@ public class Volume {
         return ( (float) temp / (float) totalDistance );
      }
 
+      // Faster than getVoxelInterpolate
      public float getVoxelInterpolate2(float[] coord) {
         if (coord[0] < 0 || coord[0] > (dimX-1) || coord[1] < 0 || coord[1] > (dimY-1) || coord[2] < 0 || coord[2] > (dimZ-1)) {
             return 0;
