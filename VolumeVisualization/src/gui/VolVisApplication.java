@@ -175,9 +175,11 @@ public class VolVisApplication extends javax.swing.JFrame {
                 infoTextPane.setText(infoText);
                 tabbedPanel.remove(raycastRenderer.getTFPanel());
                 tabbedPanel.remove(raycastRenderer.getTF2DPanel());
+                tabbedPanel.remove(raycastRenderer.getShaderPanel());
                 raycastRenderer.setVolume(volume);
                 tabbedPanel.addTab("Transfer function", raycastRenderer.getTFPanel());
                 tabbedPanel.addTab("2D transfer function", raycastRenderer.getTF2DPanel());
+                tabbedPanel.addTab("Shading", raycastRenderer.getShaderPanel());
                 visualization.update();
 
 

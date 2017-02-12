@@ -9,6 +9,7 @@ import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.awt.AWTTextureIO;
 import gui.RaycastRendererPanel;
+import gui.ShaderPanel;
 import java.util.Arrays;
 import gui.TransferFunction2DEditor;
 import gui.TransferFunctionEditor;
@@ -38,6 +39,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     TransferFunction tFunc;
     TransferFunctionEditor tfEditor;
     TransferFunction2DEditor tfEditor2D;
+    ShaderPanel shaderPanel;
     public boolean mipMode = false;
     public boolean slicerMode = true;
     public boolean compositingMode = false;
@@ -75,6 +77,9 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         
         tfEditor2D = new TransferFunction2DEditor(volume, gradients);
         tfEditor2D.addTFChangeListener(this);
+        
+        shaderPanel = new ShaderPanel();
+        shaderPanel.addTFChangeListener(this);
 
         System.out.println("Finished initialization of RaycastRenderer");
     }
@@ -89,6 +94,10 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     
     public TransferFunctionEditor getTFPanel() {
         return tfEditor;
+    }
+    
+    public ShaderPanel getShaderPanel() {
+        return shaderPanel;
     }
      
     public void setShadingMode(boolean mode) {
@@ -529,7 +538,13 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         return floatsToColor(1, color.r, color.g, color.b);
     }
     
-    private TFColor transfer2dCalc(float value, VoxelGradient gradient) {
+    /**
+     * This function calculates the opacity of a point, using the 2D transfer function
+     * @param value The value of the data point
+     * @param gradient The gradient of the data point
+     * @return The resulting colour+opacity of the data point.
+     */
+    private TFColor transfer2dCalc(short value, VoxelGradient gradient) {
         float f = tfEditor2D.triangleWidget.baseIntensity;
         float r = tfEditor2D.triangleWidget.radius;
         TFColor color = tfEditor2D.triangleWidget.color;
@@ -546,7 +561,7 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
              alpha = 1.0f - (float) Math.abs((f - value) / rGradient);
         }
         
-        if (alpha == 0) {
+        if (alpha <= 0) {
             return this.zeroColor;
         }
         else {
@@ -554,15 +569,12 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         }
     }
     
-    private static final float AMBIENT = 0.3f;
-    private static final float DIFFUSE = 0.7f;
-    private static final float SPECULAR = 0.2f;
-    private static final float SHININESS = 1f;
     /**
-     * 
-     * @param input
-     * @param viewVec
-     * @return 
+     * Perform Phong shading on a data point
+     * @param input The colour, as determined by the 1 or 2 D transfer function
+     * @param viewVec The direction of the viewer to the object
+     * @param gradient The gradient at the data point
+     * @return The shaded colour of data point
      */
     private TFColor phongShading(TFColor input, float[] viewVec, VoxelGradient gradient) {
         float[] normal = {gradient.x / gradient.mag, gradient.y / gradient.mag, gradient.z / gradient.mag};
@@ -572,14 +584,16 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         dirToLight = VectorMath.multiply(dirToLight, -1);
         float diff = VectorMath.dotproduct(normal, dirToLight);
         
-        float spec = VectorMath.dotproduct(dirToLight, normal);
-        
         float intensity = 0.0f;
-        intensity += AMBIENT;
+        if (shaderPanel.doAmbient()) {
+            intensity += shaderPanel.ambient;
+        }
         if (diff > 0) {
-            intensity += DIFFUSE*diff;
-            if (spec > 0) {
-                intensity += SPECULAR*(float)Math.pow(spec, SHININESS);
+            if (shaderPanel.doDiffuse()) {
+                intensity += shaderPanel.diffuse*diff;
+            }
+            if (shaderPanel.doSpecular()) {
+                intensity += shaderPanel.specular*(float)Math.pow(diff, shaderPanel.shininess);
             }
         }
         
