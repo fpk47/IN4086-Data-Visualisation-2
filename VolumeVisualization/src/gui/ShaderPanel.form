@@ -87,7 +87,7 @@
   <SubComponents>
     <Component class="javax.swing.JLabel" name="jLabel1">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Phonn Shading"/>
+        <Property name="text" type="java.lang.String" value="Phong Shading"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel2">

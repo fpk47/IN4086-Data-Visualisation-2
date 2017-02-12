@@ -534,6 +534,12 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         return floatsToColor(1, color.r, color.g, color.b);
     }
     
+    /**
+     * This function calculates the opacity of a point, using the 2D transfer function
+     * @param value The value of the data point
+     * @param gradient The gradient of the data point
+     * @return The resulting colour+opacity of the data point.
+     */
     private TFColor transfer2dCalc(short value, VoxelGradient gradient) {
         float f = tfEditor2D.triangleWidget.baseIntensity;
         float r = tfEditor2D.triangleWidget.radius;
@@ -561,10 +567,11 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
     }
     
     /**
-     * 
-     * @param input
-     * @param viewVec
-     * @return 
+     * Perform Phong shading on a data point
+     * @param input The colour, as determined by the 1 or 2 D transfer function
+     * @param viewVec The direction of the viewer to the object
+     * @param gradient The gradient at the data point
+     * @return The shaded colour of data point
      */
     private TFColor phongShading(TFColor input, float[] viewVec, VoxelGradient gradient) {
         float[] normal = {gradient.x / gradient.mag, gradient.y / gradient.mag, gradient.z / gradient.mag};
@@ -574,8 +581,6 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
         dirToLight = VectorMath.multiply(dirToLight, -1);
         float diff = VectorMath.dotproduct(normal, dirToLight);
         
-        float spec = VectorMath.dotproduct(dirToLight, normal);
-        
         float intensity = 0.0f;
         if (shaderPanel.doAmbient()) {
             intensity += shaderPanel.ambient;
@@ -584,10 +589,8 @@ public class RaycastRenderer extends Renderer implements TFChangeListener {
             if (shaderPanel.doDiffuse()) {
                 intensity += shaderPanel.diffuse*diff;
             }
-            if (spec > 0) {
-                if (shaderPanel.doSpecular()) {
-                    intensity += shaderPanel.specular*(float)Math.pow(spec, shaderPanel.shininess);
-                }
+            if (shaderPanel.doSpecular()) {
+                intensity += shaderPanel.specular*(float)Math.pow(diff, shaderPanel.shininess);
             }
         }
         

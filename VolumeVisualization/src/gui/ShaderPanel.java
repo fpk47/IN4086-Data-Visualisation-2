@@ -81,7 +81,7 @@ public class ShaderPanel extends javax.swing.JPanel {
         txtSpecular = new javax.swing.JTextField();
         txtShininess = new javax.swing.JTextField();
 
-        jLabel1.setText("Phonn Shading");
+        jLabel1.setText("Phong Shading");
 
         jLabel2.setText("Specular");
 
